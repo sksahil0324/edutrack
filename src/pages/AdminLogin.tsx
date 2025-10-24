@@ -20,8 +20,12 @@ export default function AdminLogin() {
     setError(null);
 
     try {
-      if (adminId === "admin123" && password === "1231") {
-        localStorage.setItem("adminSession", JSON.stringify({ adminId, timestamp: Date.now() }));
+      // Trim whitespace from inputs
+      const trimmedAdminId = adminId.trim();
+      const trimmedPassword = password.trim();
+      
+      if (trimmedAdminId === "admin123" && trimmedPassword === "1231") {
+        localStorage.setItem("adminSession", JSON.stringify({ adminId: trimmedAdminId, timestamp: Date.now() }));
         toast.success("Admin login successful!");
         navigate("/admin-dashboard");
       } else {
