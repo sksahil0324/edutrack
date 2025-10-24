@@ -24,7 +24,7 @@ interface AuthProps {
 }
 
 function Auth({ redirectAfterAuth }: AuthProps = {}) {
-  const { isLoading: authLoading, isAuthenticated, signIn } = useAuth();
+  const { isLoading: authLoading, isAuthenticated, signIn, user } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState<"signIn" | { email: string }>("signIn");
   const [otp, setOtp] = useState("");
@@ -32,11 +32,21 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) {
-      const redirect = redirectAfterAuth || "/";
-      navigate(redirect);
+    if (!authLoading && isAuthenticated && user) {
+      // Redirect based on user role if they have one
+      if (user.role === "student") {
+        navigate("/student/dashboard");
+      } else if (user.role === "teacher") {
+        navigate("/teacher/dashboard");
+      } else if (user.role === "admin") {
+        navigate("/admin-dashboard");
+      } else {
+        // No role yet, go to role selection
+        const redirect = redirectAfterAuth || "/role-selection";
+        navigate(redirect);
+      }
     }
-  }, [authLoading, isAuthenticated, navigate, redirectAfterAuth]);
+  }, [authLoading, isAuthenticated, user, navigate, redirectAfterAuth]);
   
   const handleEmailSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

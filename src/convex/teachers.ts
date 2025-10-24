@@ -37,6 +37,9 @@ export const create = mutation({
       throw new Error("Teacher profile already exists");
     }
     
+    // Update user role to teacher
+    await ctx.db.patch(userId, { role: "teacher" });
+    
     return await ctx.db.insert("teachers", {
       userId,
       fullName: args.fullName,
