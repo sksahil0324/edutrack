@@ -751,9 +751,9 @@ export default function AdminDashboard() {
                                                 {intervention.notes}
                                               </div>
                                             )}
-                                          </div>
+                                          </motion.div>
                                         ))}
-                                      </div>
+                                      </motion.div>
                                     ) : (
                                       <div className="text-center py-8 text-muted-foreground">
                                         <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
