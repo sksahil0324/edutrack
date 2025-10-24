@@ -37,7 +37,7 @@ export default function StudentSetup() {
       });
       
       toast.success("Profile created successfully!");
-      navigate("/student-dashboard");
+      navigate("/student/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create profile");
     } finally {
