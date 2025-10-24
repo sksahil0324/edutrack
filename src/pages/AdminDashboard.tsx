@@ -244,6 +244,7 @@ export default function AdminDashboard() {
                             <th className="text-left py-3 px-4 font-medium">Grade</th>
                             <th className="text-left py-3 px-4 font-medium">GPA</th>
                             <th className="text-left py-3 px-4 font-medium">Attendance</th>
+                            <th className="text-left py-3 px-4 font-medium">Risk Level</th>
                             <th className="text-left py-3 px-4 font-medium">XP / Level</th>
                             <th className="text-left py-3 px-4 font-medium">Streak</th>
                             <th className="text-left py-3 px-4 font-medium">Status</th>
@@ -283,6 +284,11 @@ export default function AdminDashboard() {
                                 <div className="text-xs text-muted-foreground">
                                   Absences: {student.totalAbsences}
                                 </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <Badge className={getRiskBadgeColor()}>
+                                  Calculating...
+                                </Badge>
                               </td>
                               <td className="py-3 px-4">
                                 <div className="font-semibold">{student.xp} XP</div>
