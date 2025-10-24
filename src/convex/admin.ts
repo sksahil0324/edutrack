@@ -1,11 +1,29 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
 
-// Get all students
+// Get all students with risk assessments
 export const getAllStudents = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("students").collect();
+    const students = await ctx.db.query("students").collect();
+    
+    // Fetch risk assessments for each student
+    const studentsWithRisk = await Promise.all(
+      students.map(async (student) => {
+        const riskAssessment = await ctx.db
+          .query("riskAssessments")
+          .withIndex("by_student", (q) => q.eq("studentId", student._id))
+          .order("desc")
+          .first();
+        
+        return {
+          ...student,
+          riskAssessment: riskAssessment || null,
+        };
+      })
+    );
+    
+    return studentsWithRisk;
   },
 });
 

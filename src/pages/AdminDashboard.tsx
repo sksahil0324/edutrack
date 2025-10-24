@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
-import { motion } from "framer-motion";
-import { BarChart3, Download, Loader2, LogOut, Search, Users, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { BarChart3, Download, Loader2, LogOut, Search, Users, X, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Award, Flame } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -16,6 +17,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
 
   const students = useQuery(api.admin.getAllStudents);
   const teachers = useQuery(api.admin.getAllTeachers);
@@ -38,12 +40,67 @@ export default function AdminDashboard() {
 
   const handleDownloadCode = async () => {
     setIsDownloading(true);
+    const toastId = toast.loading("Generating code archive...");
+    
     try {
-      toast.loading("Generating code archive...");
-      
-      // Simulate code generation and download
-      const codeContent = "Project files would be included here";
-      const blob = new Blob([codeContent], { type: "application/zip" });
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+
+      // Define all project files to include
+      const filesToInclude = [
+        "package.json",
+        "README.md",
+        "index.html",
+        "vite.config.ts",
+        "tsconfig.json",
+        "tailwind.config.ts",
+        "components.json",
+        "src/main.tsx",
+        "src/index.css",
+        "src/vite-env.d.ts",
+        "src/lib/utils.ts",
+        "src/hooks/use-auth.ts",
+        "src/hooks/use-mobile.ts",
+        "src/pages/Landing.tsx",
+        "src/pages/Auth.tsx",
+        "src/pages/RoleSelection.tsx",
+        "src/pages/StudentSetup.tsx",
+        "src/pages/StudentDashboard.tsx",
+        "src/pages/TeacherSetup.tsx",
+        "src/pages/TeacherDashboard.tsx",
+        "src/pages/AdminLogin.tsx",
+        "src/pages/AdminDashboard.tsx",
+        "src/pages/NotFound.tsx",
+        "src/convex/schema.ts",
+        "src/convex/auth.ts",
+        "src/convex/auth.config.ts",
+        "src/convex/http.ts",
+        "src/convex/users.ts",
+        "src/convex/students.ts",
+        "src/convex/teachers.ts",
+        "src/convex/admin.ts",
+        "src/convex/riskAssessments.ts",
+        "src/convex/challenges.ts",
+        "src/convex/interventions.ts",
+        "src/convex/notifications.ts",
+        "src/convex/seedData.ts",
+      ];
+
+      // Add files to ZIP
+      for (const filePath of filesToInclude) {
+        try {
+          const response = await fetch(`/${filePath}`);
+          if (response.ok) {
+            const content = await response.text();
+            zip.file(filePath, content);
+          }
+        } catch (error) {
+          console.warn(`Could not fetch ${filePath}`);
+        }
+      }
+
+      // Generate ZIP
+      const blob = await zip.generateAsync({ type: "blob" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -53,9 +110,10 @@ export default function AdminDashboard() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success("Code downloaded successfully!");
+      toast.success("Code downloaded successfully!", { id: toastId });
     } catch (error) {
-      toast.error("Failed to download code");
+      toast.error("Failed to download code", { id: toastId });
+      console.error(error);
     } finally {
       setIsDownloading(false);
     }
@@ -86,6 +144,10 @@ export default function AdminDashboard() {
     if (riskLevel === "low") return "bg-green-100 text-green-800";
     if (riskLevel === "moderate") return "bg-yellow-100 text-yellow-800";
     return "bg-red-100 text-red-800";
+  };
+
+  const toggleStudentExpand = (studentId: string) => {
+    setExpandedStudent(expandedStudent === studentId ? null : studentId);
   };
 
   return (
@@ -208,7 +270,7 @@ export default function AdminDashboard() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search users by name, email, or role..."
+                  placeholder="Search users by name or ID..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9 pr-9"
@@ -235,90 +297,185 @@ export default function AdminDashboard() {
 
                 <TabsContent value="students" className="space-y-4">
                   {filteredStudents.length > 0 ? (
-                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
-                          <tr>
-                            <th className="text-left py-3 px-4 font-medium">Name</th>
-                            <th className="text-left py-3 px-4 font-medium">Student ID</th>
-                            <th className="text-left py-3 px-4 font-medium">Grade</th>
-                            <th className="text-left py-3 px-4 font-medium">GPA</th>
-                            <th className="text-left py-3 px-4 font-medium">Attendance</th>
-                            <th className="text-left py-3 px-4 font-medium">Risk Level</th>
-                            <th className="text-left py-3 px-4 font-medium">XP / Level</th>
-                            <th className="text-left py-3 px-4 font-medium">Streak</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredStudents.map((student) => (
-                            <motion.tr
-                              key={student._id}
-                              className="border-b hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                              whileHover={{ backgroundColor: "rgba(59, 130, 246, 0.05)" }}
-                            >
-                              <td className="py-3 px-4">
+                    <div className="space-y-2">
+                      {filteredStudents.map((student) => (
+                        <motion.div
+                          key={student._id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="border rounded-lg overflow-hidden"
+                        >
+                          {/* Main Row */}
+                          <div
+                            className="p-4 hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                            onClick={() => toggleStudentExpand(student._id)}
+                          >
+                            <div className="grid grid-cols-6 gap-4 items-center">
+                              <div className="col-span-2">
                                 <div className="font-medium">{student.fullName}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Participation: {student.classParticipationScore}%
-                                </div>
-                              </td>
-                              <td className="py-3 px-4 text-muted-foreground">{student.studentId}</td>
-                              <td className="py-3 px-4">
-                                <div>{student.grade}</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Section: {student.section || 'N/A'}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="font-semibold">{student.currentGPA.toFixed(2)}</div>
-                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
-                                  <div 
-                                    className="bg-blue-600 h-1.5 rounded-full" 
-                                    style={{ width: `${(student.currentGPA / 4.0) * 100}%` }}
-                                  />
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="font-semibold">{student.attendanceRate.toFixed(0)}%</div>
-                                <div className="text-xs text-muted-foreground">
-                                  Absences: {student.totalAbsences}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Badge className={getRiskBadgeColor()}>
-                                  Calculating...
+                                <div className="text-xs text-muted-foreground">{student.studentId}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm">Grade {student.grade}</div>
+                                <div className="text-xs text-muted-foreground">Section {student.section || 'N/A'}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold">GPA: {student.currentGPA.toFixed(2)}</div>
+                                <div className="text-xs text-muted-foreground">Attendance: {student.attendanceRate.toFixed(0)}%</div>
+                              </div>
+                              <div>
+                                <Badge className={getRiskBadgeColor(student.riskAssessment?.riskLevel)}>
+                                  {student.riskAssessment?.riskLevel?.toUpperCase() || "N/A"}
                                 </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="font-semibold">{student.xp} XP</div>
-                                <Badge variant="secondary" className="text-xs mt-1">
-                                  Level {student.level}
-                                </Badge>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="flex items-center gap-1">
-                                  <span className="text-orange-500">🔥</span>
-                                  <span className="font-semibold">{student.currentStreak}</span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Best: {student.longestStreak}
-                                </div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  Active
-                                </Badge>
-                                {student.badges.length > 0 && (
+                                {student.riskAssessment && (
                                   <div className="text-xs text-muted-foreground mt-1">
-                                    🏆 {student.badges.length} badges
+                                    Risk: {student.riskAssessment.riskScore.toFixed(1)}%
                                   </div>
                                 )}
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
+                              </div>
+                              <div className="flex justify-end">
+                                {expandedStudent === student._id ? (
+                                  <ChevronUp className="h-5 w-5" />
+                                ) : (
+                                  <ChevronDown className="h-5 w-5" />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Expanded Details */}
+                          <AnimatePresence>
+                            {expandedStudent === student._id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="border-t bg-gray-50 dark:bg-gray-800/50"
+                              >
+                                <div className="p-6 space-y-6">
+                                  {/* Academic Metrics */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                      <BarChart3 className="h-4 w-4" />
+                                      Academic Metrics
+                                    </h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">CGPA</div>
+                                        <div className="text-lg font-bold">{student.currentGPA.toFixed(2)}</div>
+                                        <Progress value={(student.currentGPA / 4.0) * 100} className="h-1 mt-1" />
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Attendance</div>
+                                        <div className="text-lg font-bold">{student.attendanceRate.toFixed(0)}%</div>
+                                        <Progress value={student.attendanceRate} className="h-1 mt-1" />
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Test Scores</div>
+                                        <div className="text-lg font-bold">{student.testScoreAverage.toFixed(0)}%</div>
+                                        <Progress value={student.testScoreAverage} className="h-1 mt-1" />
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Assignment Rate</div>
+                                        <div className="text-lg font-bold">{student.assignmentCompletionRate.toFixed(0)}%</div>
+                                        <Progress value={student.assignmentCompletionRate} className="h-1 mt-1" />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Engagement Metrics */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                      <TrendingUp className="h-4 w-4" />
+                                      Engagement Metrics
+                                    </h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">XP / Level</div>
+                                        <div className="text-lg font-bold">{student.xp} XP</div>
+                                        <Badge variant="secondary" className="mt-1">Level {student.level}</Badge>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Streak</div>
+                                        <div className="text-lg font-bold flex items-center gap-1">
+                                          <Flame className="h-4 w-4 text-orange-500" />
+                                          {student.currentStreak} days
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">Best: {student.longestStreak}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Badges</div>
+                                        <div className="text-lg font-bold flex items-center gap-1">
+                                          <Award className="h-4 w-4 text-yellow-500" />
+                                          {student.badges.length}
+                                        </div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Participation</div>
+                                        <div className="text-lg font-bold">{student.classParticipationScore}%</div>
+                                        <Progress value={student.classParticipationScore} className="h-1 mt-1" />
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Dropout Risk Analysis */}
+                                  {student.riskAssessment && (
+                                    <div>
+                                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                        <AlertTriangle className="h-4 w-4" />
+                                        Dropout Risk Analysis
+                                      </h4>
+                                      <div className="space-y-3">
+                                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                                          <div>
+                                            <div className="text-xs text-muted-foreground mb-1">Academic Risk</div>
+                                            <Progress value={student.riskAssessment.academicRisk} className="h-2" />
+                                            <div className="text-xs mt-1">{student.riskAssessment.academicRisk.toFixed(0)}%</div>
+                                          </div>
+                                          <div>
+                                            <div className="text-xs text-muted-foreground mb-1">Attendance Risk</div>
+                                            <Progress value={student.riskAssessment.attendanceRisk} className="h-2" />
+                                            <div className="text-xs mt-1">{student.riskAssessment.attendanceRisk.toFixed(0)}%</div>
+                                          </div>
+                                          <div>
+                                            <div className="text-xs text-muted-foreground mb-1">Engagement Risk</div>
+                                            <Progress value={student.riskAssessment.engagementRisk} className="h-2" />
+                                            <div className="text-xs mt-1">{student.riskAssessment.engagementRisk.toFixed(0)}%</div>
+                                          </div>
+                                          <div>
+                                            <div className="text-xs text-muted-foreground mb-1">Financial Risk</div>
+                                            <Progress value={student.riskAssessment.financialRisk} className="h-2" />
+                                            <div className="text-xs mt-1">{student.riskAssessment.financialRisk.toFixed(0)}%</div>
+                                          </div>
+                                          <div>
+                                            <div className="text-xs text-muted-foreground mb-1">Social Risk</div>
+                                            <Progress value={student.riskAssessment.socialRisk} className="h-2" />
+                                            <div className="text-xs mt-1">{student.riskAssessment.socialRisk.toFixed(0)}%</div>
+                                          </div>
+                                        </div>
+                                        {student.riskAssessment.recommendations.length > 0 && (
+                                          <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+                                            <div className="text-sm font-medium mb-2">Recommendations:</div>
+                                            <ul className="space-y-1">
+                                              {student.riskAssessment.recommendations.map((rec, idx) => (
+                                                <li key={idx} className="text-xs flex items-start gap-2">
+                                                  <span className="text-yellow-600 mt-0.5">•</span>
+                                                  <span>{rec}</span>
+                                                </li>
+                                              ))}
+                                            </ul>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">
@@ -337,8 +494,9 @@ export default function AdminDashboard() {
                             <th className="text-left py-3 px-4 font-medium">Name</th>
                             <th className="text-left py-3 px-4 font-medium">Teacher ID</th>
                             <th className="text-left py-3 px-4 font-medium">Department</th>
+                            <th className="text-left py-3 px-4 font-medium">Subjects</th>
                             <th className="text-left py-3 px-4 font-medium">Level</th>
-                            <th className="text-left py-3 px-4 font-medium">Status</th>
+                            <th className="text-left py-3 px-4 font-medium">Interventions</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -352,14 +510,23 @@ export default function AdminDashboard() {
                               <td className="py-3 px-4 text-muted-foreground">{teacher.teacherId}</td>
                               <td className="py-3 px-4">{teacher.department}</td>
                               <td className="py-3 px-4">
+                                <div className="flex flex-wrap gap-1">
+                                  {teacher.subjects.map((subject, idx) => (
+                                    <Badge key={idx} variant="outline" className="text-xs">
+                                      {subject}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
                                 <Badge variant="secondary" className="bg-purple-100 text-purple-700">
                                   Level {teacher.level}
                                 </Badge>
+                                <div className="text-xs text-muted-foreground mt-1">{teacher.xp} XP</div>
                               </td>
                               <td className="py-3 px-4">
-                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                                  Active
-                                </Badge>
+                                <div className="text-sm">{teacher.interventionsCompleted} completed</div>
+                                <div className="text-xs text-muted-foreground">{teacher.successfulInterventions} successful</div>
                               </td>
                             </motion.tr>
                           ))}
