@@ -243,6 +243,9 @@ export default function AdminDashboard() {
                             <th className="text-left py-3 px-4 font-medium">Student ID</th>
                             <th className="text-left py-3 px-4 font-medium">Grade</th>
                             <th className="text-left py-3 px-4 font-medium">GPA</th>
+                            <th className="text-left py-3 px-4 font-medium">Attendance</th>
+                            <th className="text-left py-3 px-4 font-medium">XP / Level</th>
+                            <th className="text-left py-3 px-4 font-medium">Streak</th>
                             <th className="text-left py-3 px-4 font-medium">Status</th>
                           </tr>
                         </thead>
@@ -250,17 +253,61 @@ export default function AdminDashboard() {
                           {filteredStudents.map((student) => (
                             <motion.tr
                               key={student._id}
-                              className="border-b hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors"
+                              className="border-b hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                               whileHover={{ backgroundColor: "rgba(59, 130, 246, 0.05)" }}
                             >
-                              <td className="py-3 px-4 font-medium">{student.fullName}</td>
+                              <td className="py-3 px-4">
+                                <div className="font-medium">{student.fullName}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Participation: {student.classParticipationScore}%
+                                </div>
+                              </td>
                               <td className="py-3 px-4 text-muted-foreground">{student.studentId}</td>
-                              <td className="py-3 px-4">{student.grade}</td>
-                              <td className="py-3 px-4 font-semibold">{student.currentGPA.toFixed(2)}</td>
+                              <td className="py-3 px-4">
+                                <div>{student.grade}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Section: {student.section || 'N/A'}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="font-semibold">{student.currentGPA.toFixed(2)}</div>
+                                <div className="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+                                  <div 
+                                    className="bg-blue-600 h-1.5 rounded-full" 
+                                    style={{ width: `${(student.currentGPA / 4.0) * 100}%` }}
+                                  />
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="font-semibold">{student.attendanceRate.toFixed(0)}%</div>
+                                <div className="text-xs text-muted-foreground">
+                                  Absences: {student.totalAbsences}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="font-semibold">{student.xp} XP</div>
+                                <Badge variant="secondary" className="text-xs mt-1">
+                                  Level {student.level}
+                                </Badge>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-orange-500">🔥</span>
+                                  <span className="font-semibold">{student.currentStreak}</span>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  Best: {student.longestStreak}
+                                </div>
+                              </td>
                               <td className="py-3 px-4">
                                 <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                                   Active
                                 </Badge>
+                                {student.badges.length > 0 && (
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    🏆 {student.badges.length} badges
+                                  </div>
+                                )}
                               </td>
                             </motion.tr>
                           ))}
