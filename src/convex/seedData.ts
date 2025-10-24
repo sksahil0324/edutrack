@@ -240,3 +240,126 @@ export const seedDatabase = mutation({
     };
   },
 });
+
+export const createDemoAccounts = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const demoAccounts = {
+      students: [
+        { email: "student1@demo.com", name: "Alice Johnson", studentId: "DEMO001", grade: "10", section: "A" },
+        { email: "student2@demo.com", name: "Bob Smith", studentId: "DEMO002", grade: "11", section: "B" },
+        { email: "student3@demo.com", name: "Carol Davis", studentId: "DEMO003", grade: "12", section: "A" },
+      ],
+      teachers: [
+        { email: "teacher1@demo.com", name: "Dr. Emma Wilson", teacherId: "TEACH001", department: "Mathematics", subjects: ["Algebra", "Calculus"] },
+        { email: "teacher2@demo.com", name: "Prof. John Martinez", teacherId: "TEACH002", department: "Science", subjects: ["Physics", "Chemistry"] },
+      ],
+    };
+
+    const createdAccounts: any = { students: [], teachers: [] };
+
+    // Create student demo accounts
+    for (const student of demoAccounts.students) {
+      // Check if already exists
+      const existingStudent = await ctx.db
+        .query("students")
+        .withIndex("by_student_id", (q) => q.eq("studentId", student.studentId))
+        .first();
+
+      if (!existingStudent) {
+        const userId = await ctx.db.insert("users", {
+          name: student.name,
+          email: student.email,
+          role: "student",
+        });
+
+        const studentId = await ctx.db.insert("students", {
+          userId,
+          fullName: student.name,
+          studentId: student.studentId,
+          grade: student.grade,
+          section: student.section,
+          currentGPA: 3.5,
+          assignmentCompletionRate: 85,
+          testScoreAverage: 82,
+          attendanceRate: 92,
+          totalAbsences: 3,
+          tardinessCount: 2,
+          loginFrequency: 6,
+          classParticipationScore: 80,
+          challengeCompletionRate: 70,
+          hasScholarship: false,
+          feePaymentStatus: "current",
+          xp: 2500,
+          level: 3,
+          currentStreak: 7,
+          longestStreak: 15,
+          badges: ["First Login", "Week Warrior"],
+        });
+
+        // Create risk assessment
+        await ctx.db.insert("riskAssessments", {
+          studentId,
+          riskLevel: "low",
+          riskScore: 25,
+          academicRisk: 20,
+          attendanceRisk: 15,
+          engagementRisk: 30,
+          financialRisk: 10,
+          socialRisk: 25,
+          recommendations: ["Keep up the good work", "Continue regular attendance"],
+          predictedDropoutProbability: 25,
+          trendDirection: "stable",
+        });
+
+        createdAccounts.students.push({ email: student.email, studentId: student.studentId });
+      }
+    }
+
+    // Create teacher demo accounts
+    for (const teacher of demoAccounts.teachers) {
+      const existingTeacher = await ctx.db
+        .query("teachers")
+        .withIndex("by_teacher_id", (q) => q.eq("teacherId", teacher.teacherId))
+        .first();
+
+      if (!existingTeacher) {
+        const userId = await ctx.db.insert("users", {
+          name: teacher.name,
+          email: teacher.email,
+          role: "teacher",
+        });
+
+        await ctx.db.insert("teachers", {
+          userId,
+          fullName: teacher.name,
+          teacherId: teacher.teacherId,
+          department: teacher.department,
+          subjects: teacher.subjects,
+          xp: 5000,
+          level: 5,
+          interventionsCompleted: 12,
+          successfulInterventions: 10,
+        });
+
+        createdAccounts.teachers.push({ email: teacher.email, teacherId: teacher.teacherId });
+      }
+    }
+
+    return {
+      message: "Demo accounts created successfully",
+      credentials: {
+        students: [
+          { email: "student1@demo.com", studentId: "DEMO001", name: "Alice Johnson" },
+          { email: "student2@demo.com", studentId: "DEMO002", name: "Bob Smith" },
+          { email: "student3@demo.com", studentId: "DEMO003", name: "Carol Davis" },
+        ],
+        teachers: [
+          { email: "teacher1@demo.com", teacherId: "TEACH001", name: "Dr. Emma Wilson" },
+          { email: "teacher2@demo.com", teacherId: "TEACH002", name: "Prof. John Martinez" },
+        ],
+        instructions: "Use the email addresses to log in via email OTP. Check your email for the verification code.",
+      },
+    };
+  },
+});
