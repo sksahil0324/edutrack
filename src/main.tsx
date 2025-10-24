@@ -10,6 +10,11 @@ import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import "./index.css";
 import Landing from "./pages/Landing.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import RoleSelection from "./pages/RoleSelection.tsx";
+import StudentSetup from "./pages/StudentSetup.tsx";
+import TeacherSetup from "./pages/TeacherSetup.tsx";
+import StudentDashboard from "./pages/StudentDashboard.tsx";
+import TeacherDashboard from "./pages/TeacherDashboard.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -49,7 +54,12 @@ createRoot(document.getElementById("root")!).render(
           <RouteSyncer />
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<AuthPage redirectAfterAuth="/" />} /> {/* TODO: change redirect after auth to correct page */}
+            <Route path="/auth" element={<AuthPage redirectAfterAuth="/role-selection" />} />
+            <Route path="/role-selection" element={<RoleSelection />} />
+            <Route path="/student/setup" element={<StudentSetup />} />
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/teacher/setup" element={<TeacherSetup />} />
+            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
