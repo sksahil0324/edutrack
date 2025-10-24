@@ -691,9 +691,21 @@ export default function AdminDashboard() {
                                       Interventions & Tasks ({teacher.interventions?.length || 0})
                                     </h4>
                                     {teacher.interventions && teacher.interventions.length > 0 ? (
-                                      <div className="space-y-3 max-h-96 overflow-y-auto">
-                                        {teacher.interventions.map((intervention) => (
-                                          <div key={intervention._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+                                      <motion.div 
+                                        className="space-y-3 max-h-96 overflow-y-auto"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        transition={{ delay: 0.3 }}
+                                      >
+                                        {teacher.interventions.map((intervention, idx) => (
+                                          <motion.div 
+                                            key={intervention._id} 
+                                            className="bg-white dark:bg-gray-800 p-4 rounded-lg border hover:shadow-lg transition-shadow"
+                                            initial={{ opacity: 0, x: -10 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.35 + idx * 0.05 }}
+                                            whileHover={{ y: -2 }}
+                                          >
                                             <div className="flex justify-between items-start mb-2">
                                               <div className="flex-1">
                                                 <h5 className="font-medium">{intervention.title}</h5>
