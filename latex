@@ -1,0 +1,1519 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage[utf-8]{inputenc}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+
+\lstset{
+    language=TypeScript,
+    basicstyle=\ttfamily\small,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{red},
+    breaklines=true,
+    showstringspaces=false,
+    tabsize=2,
+    backgroundcolor=\color{gray!10}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{EduTrack AI Documentation}
+\lhead{Project Specification}
+\cfoot{\thepage}
+
+\title{\textbf{EduTrack AI}\\AI-Driven Student Success Platform\\Comprehensive Technical Documentation}
+\author{Development Team}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\chapter{Executive Summary}
+
+EduTrack AI is an AI-driven web application designed to enhance student success through predictive analytics, gamification, and teacher intervention tools. The platform enables:
+
+\begin{itemize}
+    \item \textbf{Dropout Risk Prediction}: AI-powered algorithms identify at-risk students early
+    \item \textbf{Gamification}: Motivate students through XP, levels, badges, and challenges
+    \item \textbf{Teacher Interventions}: Comprehensive tools for monitoring and supporting students
+    \item \textbf{Administrative Oversight}: System-wide analytics and user management
+\end{itemize}
+
+\section{Key Statistics}
+\begin{itemize}
+    \item \textbf{Seeded Data}: 1 admin, 10 teachers, 100 students
+    \item \textbf{Interventions}: 10-15 per teacher (100-150 total)
+    \item \textbf{Demo Accounts}: 3 students, 2 teachers for testing
+    \item \textbf{Tech Stack}: React, TypeScript, Convex, Tailwind CSS, Framer Motion
+\end{itemize}
+
+\chapter{System Architecture}
+
+\section{Technology Stack}
+
+\subsection{Frontend}
+\begin{itemize}
+    \item \textbf{Framework}: React 18+ with TypeScript
+    \item \textbf{Routing}: React Router (file-based routing in src/main.tsx)
+    \item \textbf{Styling}: Tailwind CSS + shadcn/ui components
+    \item \textbf{Animations}: Framer Motion for smooth transitions
+    \item \textbf{Build Tool}: Vite
+\end{itemize}
+
+\subsection{Backend}
+\begin{itemize}
+    \item \textbf{Database}: Convex (real-time, serverless)
+    \item \textbf{Authentication}: Convex Auth with Email OTP
+    \item \textbf{Runtime}: Node.js for actions requiring external APIs
+    \item \textbf{File Storage}: Convex Storage for documents and archives
+\end{itemize}
+
+\section{System Architecture Diagram}
+
+\begin{verbatim}
+┌─────────────────────────────────────────────────────────┐
+│                    Frontend (React)                      │
+│  ┌──────────────┬──────────────┬──────────────┐         │
+│  │   Landing    │   Auth       │  RoleSelect  │         │
+│  └──────────────┴──────────────┴──────────────┘         │
+│  ┌──────────────┬──────────────┬──────────────┐         │
+│  │   Student    │   Teacher    │    Admin     │         │
+│  │  Dashboard   │  Dashboard   │  Dashboard   │         │
+│  └──────────────┴──────────────┴──────────────┘         │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│              Convex Backend (TypeScript)                │
+│  ┌──────────────┬──────────────┬──────────────┐         │
+│  │   Queries    │  Mutations   │   Actions    │         │
+│  └──────────────┴──────────────┴──────────────┘         │
+│  ┌──────────────┬──────────────┬──────────────┐         │
+│  │  Students    │   Teachers   │    Admin     │         │
+│  │  Challenges  │ Interventions│ Risk Assess  │         │
+│  └──────────────┴──────────────┴──────────────┘         │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│         Convex Database (Real-time Sync)               │
+│  ┌──────────────┬──────────────┬──────────────┐         │
+│  │   Users      │   Students   │   Teachers   │         │
+│  │   Admins     │   Challenges │ Interventions│         │
+│  │   Risk Assess│ Notifications│  Activity Log│         │
+│  └──────────────┴──────────────┴──────────────┘         │
+└─────────────────────────────────────────────────────────┘
+\end{verbatim}
+
+\chapter{Database Schema}
+
+\section{Core Tables}
+
+\subsection{Users Table}
+\begin{lstlisting}
+users: {
+  name: string (optional)
+  image: string (optional)
+  email: string (optional)
+  emailVerificationTime: number (optional)
+  isAnonymous: boolean (optional)
+  role: "admin" | "student" | "teacher" (optional)
+}
+Indexes: by_email
+\end{lstlisting}
+
+\subsection{Students Table}
+\begin{lstlisting}
+students: {
+  userId: Id<"users">
+  fullName: string
+  studentId: string
+  grade: string
+  section: string (optional)
+  
+  // Academic Metrics
+  currentGPA: number
+  assignmentCompletionRate: number (0-100)
+  testScoreAverage: number (0-100)
+  
+  // Attendance
+  attendanceRate: number (0-100)
+  totalAbsences: number
+  tardinessCount: number
+  
+  // Engagement
+  loginFrequency: number
+  classParticipationScore: number (0-100)
+  challengeCompletionRate: number (0-100)
+  
+  // Financial
+  hasScholarship: boolean
+  feePaymentStatus: string
+  
+  // Gamification
+  xp: number
+  level: number
+  currentStreak: number
+  longestStreak: number
+  badges: string[]
+  
+  assignedTeacherId: Id<"users"> (optional)
+}
+Indexes: by_user, by_teacher, by_student_id
+\end{lstlisting}
+
+\subsection{Teachers Table}
+\begin{lstlisting}
+teachers: {
+  userId: Id<"users">
+  fullName: string
+  teacherId: string
+  department: string
+  subjects: string[]
+  
+  // Gamification
+  xp: number
+  level: number
+  interventionsCompleted: number
+  successfulInterventions: number
+}
+Indexes: by_user, by_teacher_id
+\end{lstlisting}
+
+\subsection{Risk Assessments Table}
+\begin{lstlisting}
+riskAssessments: {
+  studentId: Id<"students">
+  riskLevel: "low" | "moderate" | "high"
+  riskScore: number (0-100)
+  
+  // Contributing Factors
+  academicRisk: number
+  attendanceRisk: number
+  engagementRisk: number
+  financialRisk: number
+  socialRisk: number
+  
+  // AI Recommendations
+  recommendations: string[]
+  predictedDropoutProbability: number (0-100)
+  
+  // Trend Data
+  trendDirection: string ("improving"|"stable"|"declining")
+  previousScore: number (optional)
+}
+Indexes: by_student, by_risk_level
+\end{lstlisting}
+
+\subsection{Interventions Table}
+\begin{lstlisting}
+interventions: {
+  studentId: Id<"students">
+  teacherId: Id<"teachers">
+  title: string
+  description: string
+  type: string ("mentoring"|"tutoring"|"counseling"|"assignment")
+  status: string ("planned"|"in-progress"|"completed"|"cancelled")
+  priority: string ("low"|"medium"|"high")
+  
+  dueDate: number (optional)
+  completedDate: number (optional)
+  
+  // Effectiveness Tracking
+  initialRiskScore: number
+  finalRiskScore: number (optional)
+  effectiveness: number (0-100, optional)
+  
+  notes: string (optional)
+}
+Indexes: by_student, by_teacher, by_status
+\end{lstlisting}
+
+\subsection{Challenges Table}
+\begin{lstlisting}
+challenges: {
+  title: string
+  description: string
+  type: string ("daily"|"weekly"|"monthly"|"special")
+  category: string ("academic"|"attendance"|"engagement"|"social")
+  
+  xpReward: number
+  badgeReward: string (optional)
+  
+  targetMetric: string
+  targetValue: number
+  
+  isActive: boolean
+  startDate: number
+  endDate: number
+}
+Indexes: by_type, by_active
+\end{lstlisting}
+
+\subsection{Notifications Table}
+\begin{lstlisting}
+notifications: {
+  userId: Id<"users">
+  title: string
+  message: string
+  type: string ("alert"|"achievement"|"reminder"|"intervention")
+  isRead: boolean
+  link: string (optional)
+}
+Indexes: by_user, by_user_and_read
+\end{lstlisting}
+
+\chapter{Backend Modules}
+
+\section{Authentication Module (auth.ts, auth.config.ts)}
+
+\subsection{Purpose}
+Manages user authentication using Convex Auth with Email OTP support.
+
+\subsection{Key Functions}
+
+\begin{lstlisting}
+// Email OTP Configuration
+export const emailOtpConfig = {
+  maxAttempts: 3,
+  expirationTime: 15 * 60 * 1000, // 15 minutes
+  sendEmail: async (email, code) => {
+    // Send OTP via email service
+  }
+}
+
+// Authentication Flow
+1. User enters email
+2. System sends OTP code
+3. User verifies code
+4. User authenticated, redirected to role selection
+5. After profile setup, user role assigned
+6. Returning users redirected to dashboard
+\end{lstlisting}
+
+\section{Students Module (students.ts)}
+
+\subsection{Purpose}
+Manages student profiles, metrics, and gamification data.
+
+\subsection{Key Functions}
+
+\begin{lstlisting}
+// Get current student profile
+export const getCurrentStudent = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    return await ctx.db
+      .query("students")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+  }
+});
+
+// Create student profile
+export const create = mutation({
+  args: {
+    fullName: v.string(),
+    studentId: v.string(),
+    grade: v.string(),
+    section: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    // Update user role to "student"
+    // Create student document with initial metrics
+  }
+});
+
+// Add XP and update level
+export const addXP = mutation({
+  args: {
+    studentId: v.id("students"),
+    xp: v.number()
+  },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    const newXP = student.xp + args.xp;
+    const newLevel = Math.floor(newXP / 1000) + 1;
+    // Update student with new XP and level
+  }
+});
+
+// Update streak
+export const updateStreak = mutation({
+  args: {
+    studentId: v.id("students"),
+    increment: v.boolean()
+  },
+  handler: async (ctx, args) => {
+    // Increment or reset streak
+    // Track longest streak
+  }
+});
+
+// Add badge
+export const addBadge = mutation({
+  args: {
+    studentId: v.id("students"),
+    badge: v.string()
+  },
+  handler: async (ctx, args) => {
+    // Add badge to student's collection
+  }
+});
+\end{lstlisting}
+
+\section{Teachers Module (teachers.ts)}
+
+\subsection{Purpose}
+Manages teacher profiles and intervention tracking.
+
+\subsection{Key Functions}
+
+\begin{lstlisting}
+// Get current teacher profile
+export const getCurrentTeacher = query({
+  handler: async (ctx) => {
+    const userId = await getAuthUserId(ctx);
+    return await ctx.db
+      .query("teachers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+  }
+});
+
+// Create teacher profile
+export const create = mutation({
+  args: {
+    fullName: v.string(),
+    teacherId: v.string(),
+    department: v.string(),
+    subjects: v.array(v.string())
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    // Update user role to "teacher"
+    // Create teacher document
+  }
+});
+
+// Add XP for teacher
+export const addXP = mutation({
+  args: {
+    teacherId: v.id("teachers"),
+    xp: v.number()
+  },
+  handler: async (ctx, args) => {
+    // Update teacher XP and level (1 level per 2000 XP)
+  }
+});
+\end{lstlisting}
+
+\section{Risk Assessment Module (riskAssessments.ts)}
+
+\subsection{Purpose}
+AI-powered risk assessment and dropout prediction.
+
+\subsection{Algorithm}
+
+\begin{lstlisting}
+Risk Score Calculation:
+riskScore = (
+  academicRisk * 0.35 +
+  attendanceRisk * 0.25 +
+  engagementRisk * 0.20 +
+  financialRisk * 0.15 +
+  socialRisk * 0.05
+)
+
+Risk Level Classification:
+- Low: riskScore < 40
+- Moderate: 40 <= riskScore < 70
+- High: riskScore >= 70
+
+Trend Direction:
+- Improving: currentScore < previousScore
+- Stable: |currentScore - previousScore| <= 5
+- Declining: currentScore > previousScore
+\end{lstlisting}
+
+\section{Interventions Module (interventions.ts)}
+
+\subsection{Purpose}
+Manages teacher interventions for at-risk students.
+
+\subsection{Key Functions}
+
+\begin{lstlisting}
+// Create intervention
+export const create = mutation({
+  args: {
+    studentId: v.id("students"),
+    teacherId: v.id("teachers"),
+    title: v.string(),
+    description: v.string(),
+    type: v.string(),
+    priority: v.string(),
+    dueDate: v.optional(v.number())
+  },
+  handler: async (ctx, args) => {
+    // Create intervention document
+    // Set initial risk score from student's assessment
+  }
+});
+
+// Complete intervention
+export const complete = mutation({
+  args: {
+    interventionId: v.id("interventions"),
+    finalRiskScore: v.number(),
+    notes: v.string()
+  },
+  handler: async (ctx, args) => {
+    const intervention = await ctx.db.get(args.interventionId);
+    const effectiveness = (
+      (intervention.initialRiskScore - args.finalRiskScore) /
+      intervention.initialRiskScore
+    ) * 100;
+    // Update intervention with completion data
+  }
+});
+\end{lstlisting}
+
+\section{Challenges Module (challenges.ts)}
+
+\subsection{Purpose}
+Manages gamification challenges and student progress.
+
+\subsection{Challenge Types}
+
+\begin{itemize}
+    \item \textbf{Daily}: Recurring daily challenges (e.g., "Complete homework")
+    \item \textbf{Weekly}: Recurring weekly challenges (e.g., "Maintain attendance")
+    \item \textbf{Monthly}: Recurring monthly challenges (e.g., "Improve GPA")
+    \item \textbf{Special}: One-time special challenges (e.g., "First login")
+\end{itemize}
+
+\subsection{Challenge Categories}
+
+\begin{itemize}
+    \item \textbf{Academic}: GPA, assignment completion, test scores
+    \item \textbf{Attendance}: Attendance rate, punctuality
+    \item \textbf{Engagement}: Login frequency, participation
+    \item \textbf{Social}: Peer interaction, community participation
+\end{itemize}
+
+\section{Admin Module (admin.ts)}
+
+\subsection{Purpose}
+Administrative functions for system management and analytics.
+
+\subsection{Key Functions}
+
+\begin{lstlisting}
+// Get system statistics
+export const getSystemStats = query({
+  handler: async (ctx) => {
+    const totalUsers = await ctx.db.query("users").collect();
+    const totalStudents = await ctx.db.query("students").collect();
+    const totalTeachers = await ctx.db.query("teachers").collect();
+    const totalInterventions = await ctx.db.query("interventions").collect();
+    
+    return {
+      totalUsers: totalUsers.length,
+      totalStudents: totalStudents.length,
+      totalTeachers: totalTeachers.length,
+      totalInterventions: totalInterventions.length,
+      highRiskStudents: riskAssessments.filter(r => r.riskLevel === "high").length
+    };
+  }
+});
+
+// Get all users with filtering
+export const getAllUsers = query({
+  args: {
+    role: v.optional(v.string()),
+    searchTerm: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    // Query users with optional filtering
+  }
+});
+
+// Get all teachers with their interventions
+export const getAllTeachers = query({
+  handler: async (ctx) => {
+    // Fetch teachers with intervention counts and effectiveness
+  }
+});
+\end{lstlisting}
+
+\section{Seed Data Module (seedData.ts)}
+
+\subsection{Purpose}
+Initialize database with demo data for testing.
+
+\subsection{Seeded Data}
+
+\begin{lstlisting}
+Admin Account:
+- ID: admin123
+- Password: 1231
+- Email: admin@edutrack.ai
+
+Teachers (10):
+- Dr. Sarah Johnson, Prof. Michael Chen, Ms. Emily Rodriguez, etc.
+- Departments: Mathematics, Science, English, History, Computer Science
+- Random XP: 0-5000, Levels: 1-5
+
+Students (100):
+- Random names from first/last name pools
+- Grades: 9, 10, 11, 12
+- Sections: A, B, C, D
+- Random metrics: GPA, attendance, engagement
+- XP: 0-10000, Levels: 1-10
+
+Interventions (100-150):
+- 10-15 per teacher
+- Random types: mentoring, tutoring, counseling, assignment
+- Random statuses: planned, in-progress, completed, cancelled
+- Effectiveness tracking for completed interventions
+
+Demo Accounts:
+Students:
+- student1@demo.com (Alice Johnson, DEMO001, Grade 10)
+- student2@demo.com (Bob Smith, DEMO002, Grade 11)
+- student3@demo.com (Carol Davis, DEMO003, Grade 12)
+
+Teachers:
+- teacher1@demo.com (Dr. Emma Wilson, TEACH001)
+- teacher2@demo.com (Prof. John Martinez, TEACH002)
+\end{lstlisting}
+
+\chapter{Frontend Components}
+
+\section{Page Structure}
+
+\subsection{Landing Page (Landing.tsx)}
+
+\begin{lstlisting}
+Purpose: Entry point for the application
+
+Sections:
+1. Loading State
+   - Displays spinner while auth status loads
+   
+2. Hero Section
+   - Title: "AI-Powered Student Success"
+   - Description: Platform overview
+   - CTA: "Get Started" or "Go to Dashboard" (based on auth)
+   
+3. Features Section
+   - 6 feature cards with icons
+   - Predictive Analytics, Gamification, Teacher Tools
+   - Real-time Alerts, Progress Tracking, Resource Library
+   
+4. Call to Action Section
+   - "Ready to Transform Education?"
+   - "Start Free Today" button
+   
+5. Admin Login Footer
+   - Direct link to admin login page
+
+Animations:
+- Fade-in on page load
+- Staggered animations for feature cards
+- Hover effects on buttons
+\end{lstlisting}
+
+\subsection{Authentication Page (Auth.tsx)}
+
+\begin{lstlisting}
+Purpose: User authentication via Email OTP
+
+Flow:
+1. User enters email
+2. System sends OTP code
+3. User enters verification code
+4. Authentication successful
+5. Redirect to role selection (new users)
+   or dashboard (returning users)
+
+Features:
+- Email input validation
+- OTP code entry (6 digits)
+- Resend code option
+- Anonymous login option
+- Error handling and feedback
+\end{lstlisting}
+
+\subsection{Role Selection Page (RoleSelection.tsx)}
+
+\begin{lstlisting}
+Purpose: Allow users to select their role
+
+Roles:
+1. Student
+   - Track progress
+   - Complete challenges
+   - Earn XP and badges
+   - View risk assessment
+   
+2. Teacher
+   - Monitor students
+   - Create interventions
+   - View analytics
+   - Track effectiveness
+
+Features:
+- Animated role cards
+- Feature lists for each role
+- Navigation to setup pages
+- Back button to home
+\end{lstlisting}
+
+\subsection{Student Setup Page (StudentSetup.tsx)}
+
+\begin{lstlisting}
+Purpose: Collect student profile information
+
+Fields:
+- Full Name (required)
+- Student ID (required)
+- Grade (required, dropdown)
+- Section (optional)
+
+On Completion:
+- Create student profile
+- Set user role to "student"
+- Redirect to /student/dashboard
+\end{lstlisting}
+
+\subsection{Student Dashboard (StudentDashboard.tsx)}
+
+\begin{lstlisting}
+Purpose: Main student interface
+
+Sections:
+1. Profile Overview
+   - Student name, ID, grade
+   - Current level and XP
+   - Streak information
+   
+2. Risk Assessment
+   - Risk level (Low/Moderate/High)
+   - Risk score (0-100)
+   - Contributing factors breakdown
+   - Recommendations
+   
+3. Gamification
+   - XP progress bar
+   - Level display
+   - Badges earned
+   - Current streak
+   
+4. Active Challenges
+   - Daily challenges
+   - Weekly challenges
+   - Progress tracking
+   - XP rewards
+   
+5. Performance Metrics
+   - GPA
+   - Attendance rate
+   - Assignment completion
+   - Test scores
+   
+6. Recent Interventions
+   - Interventions from teachers
+   - Status tracking
+   - Due dates
+
+Animations:
+- Smooth transitions between sections
+- Progress bar animations
+- Badge unlock animations
+- Status change animations
+\end{lstlisting}
+
+\subsection{Teacher Dashboard (TeacherDashboard.tsx)}
+
+\begin{lstlisting}
+Purpose: Teacher monitoring and intervention management
+
+Sections:
+1. Profile Overview
+   - Teacher name, ID, department
+   - Subjects taught
+   - Level and XP
+   
+2. Student Monitoring
+   - List of assigned students
+   - Risk levels
+   - Quick stats
+   - Search/filter functionality
+   
+3. Interventions Management
+   - Create new intervention
+   - View active interventions
+   - Track completion
+   - Measure effectiveness
+   
+4. Analytics
+   - Intervention success rate
+   - Student progress trends
+   - Risk distribution
+   - Effectiveness metrics
+   
+5. Notifications
+   - Student alerts
+   - Intervention reminders
+   - Achievement notifications
+
+Features:
+- Real-time student data updates
+- Intervention status tracking
+- Effectiveness calculations
+- Export reports
+\end{lstlisting}
+
+\subsection{Admin Dashboard (AdminDashboard.tsx)}
+
+\begin{lstlisting}
+Purpose: System administration and analytics
+
+Sections:
+1. System Statistics
+   - Total users, students, teachers
+   - Total interventions
+   - High-risk students count
+   - System health metrics
+   
+2. User Management
+   - List all users
+   - Filter by role
+   - Search functionality
+   - User details
+   
+3. Teacher Management
+   - List all teachers
+   - Intervention counts
+   - Success rates
+   - Department breakdown
+   
+4. Intervention Analytics
+   - Total interventions
+   - Status distribution
+   - Effectiveness metrics
+   - Priority breakdown
+   
+5. Code Download
+   - Generate project ZIP
+   - Include all source files
+   - Timestamp and version info
+   
+6. Expandable Details
+   - Student intervention lists
+   - Teacher performance metrics
+   - Risk assessment details
+
+Features:
+- Smooth animations for all transitions
+- Real-time data updates
+- Search and filtering
+- Export functionality
+- Responsive design
+\end{lstlisting}
+
+\chapter{Data Flow and Workflows}
+
+\section{User Authentication Flow}
+
+\begin{verbatim}
+┌─────────────────────────────────────────────────────────┐
+│                    User Visits App                       │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│              Check Authentication Status                │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+                    ┌────────────┐
+                    │ Logged In? │
+                    └────┬───────┘
+                    ┌───┴────┐
+                    ↓        ↓
+              YES  NO
+                ↓        ↓
+        ┌──────────┐  ┌──────────────┐
+        │ Check    │  │ Show Landing │
+        │ User Role│  │ Page         │
+        └────┬─────┘  └──────────────┘
+             ↓
+        ┌────────────────────┐
+        │ Role Assigned?     │
+        └────┬───────────────┘
+        ┌────┴────┐
+        ↓         ↓
+      YES        NO
+        ↓         ↓
+    ┌────────┐  ┌──────────────┐
+    │ Go to  │  │ Role         │
+    │ Role   │  │ Selection    │
+    │ Dash   │  │ Page         │
+    └────────┘  └──────────────┘
+                       ↓
+                ┌──────────────┐
+                │ Select Role  │
+                │ (Student/    │
+                │  Teacher)    │
+                └──────┬───────┘
+                       ↓
+                ┌──────────────┐
+                │ Setup Page   │
+                │ (Profile)    │
+                └──────┬───────┘
+                       ↓
+                ┌──────────────┐
+                │ Create       │
+                │ Profile &    │
+                │ Set Role     │
+                └──────┬───────┘
+                       ↓
+                ┌──────────────┐
+                │ Redirect to  │
+                │ Dashboard    │
+                └──────────────┘
+\end{verbatim}
+
+\section{Risk Assessment Workflow}
+
+\begin{verbatim}
+┌─────────────────────────────────────────────────────────┐
+│         Student Metrics Updated (Daily/Weekly)          │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│         Collect Student Data Points                     │
+│  - GPA, Attendance, Engagement, Financial, Social      │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│         Calculate Risk Factors (0-100)                  │
+│  - Academic Risk: GPA, Assignment Completion           │
+│  - Attendance Risk: Attendance Rate, Tardiness         │
+│  - Engagement Risk: Login Frequency, Participation     │
+│  - Financial Risk: Scholarship, Fee Status             │
+│  - Social Risk: Peer Interaction, Behavior             │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Calculate Weighted Risk Score                        │
+│    Score = (Academic*0.35 + Attendance*0.25 +          │
+│             Engagement*0.20 + Financial*0.15 +         │
+│             Social*0.05)                               │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│         Classify Risk Level                             │
+│  - Low: Score < 40                                      │
+│  - Moderate: 40 <= Score < 70                          │
+│  - High: Score >= 70                                    │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Generate AI Recommendations                          │
+│  - Tutoring, Mentoring, Counseling, etc.               │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Store Assessment & Notify Teachers                   │
+│  - High-risk students trigger alerts                    │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Display on Student & Teacher Dashboards              │
+└─────────────────────────────────────────────────────────┘
+\end{verbatim}
+
+\section{Intervention Workflow}
+
+\begin{verbatim}
+┌─────────────────────────────────────────────────────────┐
+│         Teacher Identifies At-Risk Student              │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Teacher Creates Intervention                         │
+│  - Title, Description, Type, Priority, Due Date        │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    System Records Initial Risk Score                    │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Intervention Status: PLANNED                         │
+│  - Notify student of intervention                       │
+│  - Set due date reminder                                │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Teacher Executes Intervention                        │
+│  - Tutoring session, mentoring, counseling, etc.       │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Intervention Status: IN-PROGRESS                     │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Teacher Completes Intervention                       │
+│  - Record final risk score                              │
+│  - Add notes and observations                           │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Calculate Effectiveness                              │
+│    Effectiveness = ((Initial - Final) / Initial) * 100  │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Intervention Status: COMPLETED                       │
+│  - Award teacher XP based on effectiveness              │
+│  - Update student risk assessment                       │
+│  - Log in activity history                              │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Display Results on Dashboards                        │
+│  - Show effectiveness metrics                           │
+│  - Update student risk level                            │
+└─────────────────────────────────────────────────────────┘
+\end{verbatim}
+
+\section{Gamification Workflow}
+
+\begin{verbatim}
+┌─────────────────────────────────────────────────────────┐
+│         Student Completes Challenge                     │
+│  - Homework, Attendance, Participation, etc.            │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    System Verifies Challenge Completion                 │
+│  - Check metrics against target values                  │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Award XP & Badges                                    │
+│  - XP: Challenge reward amount                          │
+│  - Badge: If applicable                                 │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Update Student Level                                 │
+│    New Level = Floor(Total XP / 1000) + 1               │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Update Streak                                        │
+│  - Increment current streak                             │
+│  - Update longest streak if exceeded                    │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Send Notification                                    │
+│  - Achievement unlocked                                 │
+│  - Level up notification                                │
+│  - Streak milestone                                     │
+└────────────────────────┬────────────────────────────────┘
+                         ↓
+┌─────────────────────────────────────────────────────────┐
+│    Display on Student Dashboard                         │
+│  - Updated XP bar                                       │
+│  - New level display                                    │
+│  - Badge showcase                                       │
+└─────────────────────────────────────────────────────────┘
+\end{verbatim}
+
+\chapter{API Reference}
+
+\section{Query Functions}
+
+\subsection{Students Queries}
+
+\begin{lstlisting}
+getCurrentStudent()
+  Returns: Student profile of authenticated user
+  
+getById(studentId: Id<"students">)
+  Returns: Student document by ID
+  
+getAll()
+  Returns: All students in system
+  
+getByTeacher(teacherId: Id<"users">)
+  Returns: Students assigned to specific teacher
+\end{lstlisting}
+
+\subsection{Teachers Queries}
+
+\begin{lstlisting}
+getCurrentTeacher()
+  Returns: Teacher profile of authenticated user
+\end{lstlisting}
+
+\subsection{Admin Queries}
+
+\begin{lstlisting}
+getSystemStats()
+  Returns: {
+    totalUsers: number,
+    totalStudents: number,
+    totalTeachers: number,
+    totalInterventions: number,
+    highRiskStudents: number
+  }
+  
+getAllUsers(role?: string, searchTerm?: string)
+  Returns: Filtered list of users
+  
+getAllTeachers()
+  Returns: Teachers with intervention data
+\end{lstlisting}
+
+\section{Mutation Functions}
+
+\subsection{Student Mutations}
+
+\begin{lstlisting}
+create(fullName, studentId, grade, section?)
+  Creates new student profile
+  
+updateMetrics(studentId, metrics)
+  Updates academic and engagement metrics
+  
+addXP(studentId, xp)
+  Adds XP and updates level
+  Returns: { newXP, newLevel, leveledUp }
+  
+updateStreak(studentId, increment)
+  Updates current and longest streak
+  
+addBadge(studentId, badge)
+  Adds badge to student's collection
+\end{lstlisting}
+
+\subsection{Teacher Mutations}
+
+\begin{lstlisting}
+create(fullName, teacherId, department, subjects)
+  Creates new teacher profile
+  
+addXP(teacherId, xp)
+  Adds XP and updates level
+\end{lstlisting}
+
+\subsection{Intervention Mutations}
+
+\begin{lstlisting}
+create(studentId, teacherId, title, description, type, priority, dueDate?)
+  Creates new intervention
+  
+complete(interventionId, finalRiskScore, notes)
+  Completes intervention and calculates effectiveness
+  
+updateStatus(interventionId, status)
+  Updates intervention status
+\end{lstlisting}
+
+\chapter{Routing Configuration}
+
+\section{Route Definitions (src/main.tsx)}
+
+\begin{lstlisting}
+Routes:
+/                          → Landing page
+/auth                      → Authentication page
+/role-selection            → Role selection page
+/student/setup             → Student profile setup
+/student/dashboard         → Student dashboard
+/teacher/setup             → Teacher profile setup
+/teacher/dashboard         → Teacher dashboard
+/admin-login               → Admin login page
+/admin/dashboard           → Admin dashboard
+/*                         → Not found page
+
+Route Protection:
+- Auth routes: Require authentication
+- Setup routes: Require authentication, no existing profile
+- Dashboard routes: Require authentication + profile
+- Admin routes: Require admin credentials
+\end{lstlisting}
+
+\chapter{Deployment and Configuration}
+
+\section{Environment Variables}
+
+\begin{lstlisting}
+Frontend (.env.local):
+VITE_CONVEX_URL=<convex-deployment-url>
+
+Backend (Convex):
+CONVEX_DEPLOYMENT=<deployment-id>
+CONVEX_SITE_URL=<site-url>
+
+Email Service (for OTP):
+EMAIL_SERVICE_API_KEY=<api-key>
+EMAIL_FROM_ADDRESS=<sender-email>
+\end{lstlisting}
+
+\section{Build and Deployment}
+
+\begin{lstlisting}
+Development:
+npm run dev          # Start dev server
+npm run convex dev   # Start Convex backend
+
+Production Build:
+npm run build        # Build frontend
+npm run convex deploy # Deploy backend
+
+Testing:
+npm run test         # Run tests
+npm run type-check   # TypeScript check
+\end{lstlisting}
+
+\chapter{Security Considerations}
+
+\section{Authentication Security}
+
+\begin{itemize}
+    \item Email OTP verification (15-minute expiration)
+    \item Secure session management via Convex Auth
+    \item Role-based access control (RBAC)
+    \item Admin credentials stored securely
+\end{itemize}
+
+\section{Data Security}
+
+\begin{itemize}
+    \item All data encrypted in transit (HTTPS)
+    \item Database access controlled via Convex permissions
+    \item User data isolated by role
+    \item Audit logging for admin actions
+\end{itemize}
+
+\section{API Security}
+
+\begin{itemize}
+    \item All mutations require authentication
+    \item Queries filtered by user role
+    \item Rate limiting on sensitive operations
+    \item Input validation on all endpoints
+\end{itemize}
+
+\chapter{Performance Optimization}
+
+\section{Frontend Optimization}
+
+\begin{itemize}
+    \item Code splitting with React Router
+    \item Lazy loading of components
+    \item Memoization of expensive computations
+    \item Optimized animations with Framer Motion
+\end{itemize}
+
+\section{Backend Optimization}
+
+\begin{itemize}
+    \item Indexed queries for fast lookups
+    \item Pagination for large datasets
+    \item Real-time subscriptions via Convex
+    \item Efficient data aggregation
+\end{itemize}
+
+\section{Database Optimization}
+
+\begin{itemize}
+    \item Strategic indexing on frequently queried fields
+    \item Denormalization where appropriate
+    \item Efficient aggregation queries
+    \item Archive old data periodically
+\end{itemize}
+
+\chapter{Testing Strategy}
+
+\section{Unit Testing}
+
+\begin{itemize}
+    \item Test individual functions and components
+    \item Mock Convex queries and mutations
+    \item Validate business logic
+\end{itemize}
+
+\section{Integration Testing}
+
+\begin{itemize}
+    \item Test component interactions
+    \item Verify data flow between frontend and backend
+    \item Test authentication flows
+\end{itemize}
+
+\section{End-to-End Testing}
+
+\begin{itemize}
+    \item Test complete user workflows
+    \item Verify role-based access
+    \item Test intervention creation and completion
+    \item Validate gamification mechanics
+\end{itemize}
+
+\section{Demo Accounts for Testing}
+
+\begin{lstlisting}
+Admin:
+- ID: admin123
+- Password: 1231
+
+Students:
+- Email: student1@demo.com (Alice Johnson)
+- Email: student2@demo.com (Bob Smith)
+- Email: student3@demo.com (Carol Davis)
+
+Teachers:
+- Email: teacher1@demo.com (Dr. Emma Wilson)
+- Email: teacher2@demo.com (Prof. John Martinez)
+
+Login Method: Email OTP (check email for code)
+\end{lstlisting}
+
+\chapter{Troubleshooting Guide}
+
+\section{Common Issues}
+
+\subsection{Authentication Issues}
+\begin{itemize}
+    \item \textbf{Problem}: OTP not received
+    \begin{itemize}
+        \item Check email spam folder
+        \item Verify email service configuration
+        \item Check OTP expiration (15 minutes)
+    \end{itemize}
+    
+    \item \textbf{Problem}: User redirected to role selection after login
+    \begin{itemize}
+        \item User role not set in database
+        \item Profile not created yet
+        \item Clear browser cache and retry
+    \end{itemize}
+\end{itemize}
+
+\subsection{Dashboard Issues}
+\begin{itemize}
+    \item \textbf{Problem}: Empty dashboard
+    \begin{itemize}
+        \item Check user profile exists
+        \item Verify Convex connection
+        \item Check browser console for errors
+    \end{itemize}
+    
+    \item \textbf{Problem}: Data not updating
+    \begin{itemize}
+        \item Refresh page
+        \item Check Convex real-time subscriptions
+        \item Verify database has data
+    \end{itemize}
+\end{itemize}
+
+\subsection{Performance Issues}
+\begin{itemize}
+    \item \textbf{Problem}: Slow page load
+    \begin{itemize}
+        \item Check network tab for slow requests
+        \item Verify Convex deployment status
+        \item Clear browser cache
+    \end{itemize}
+    
+    \item \textbf{Problem}: Animations stuttering
+    \begin{itemize}
+        \item Reduce animation complexity
+        \item Check browser performance
+        \item Disable hardware acceleration if needed
+    \end{itemize}
+\end{itemize}
+
+\chapter{Future Enhancements}
+
+\section{Planned Features}
+
+\begin{itemize}
+    \item \textbf{Advanced Analytics}: Machine learning models for better predictions
+    \item \textbf{Mobile App}: Native iOS/Android applications
+    \item \textbf{Parent Portal}: Parent access to student progress
+    \item \textbf{Integration}: LMS integration (Canvas, Blackboard)
+    \item \textbf{Notifications}: SMS and push notifications
+    \item \textbf{Reports}: Automated report generation
+    \item \textbf{Collaboration}: Peer tutoring and study groups
+    \item \textbf{Accessibility}: Enhanced accessibility features
+\end{itemize}
+
+\section{Scalability Roadmap}
+
+\begin{itemize}
+    \item Increase database capacity for larger institutions
+    \item Implement caching layer for frequently accessed data
+    \item Add CDN for static assets
+    \item Implement message queue for background jobs
+    \item Add analytics and monitoring infrastructure
+\end{itemize}
+
+\chapter{Conclusion}
+
+EduTrack AI is a comprehensive platform designed to improve student outcomes through predictive analytics, gamification, and teacher intervention tools. The system is built on modern technologies (React, TypeScript, Convex) and follows best practices for security, performance, and user experience.
+
+The platform successfully addresses the key challenges in education:
+\begin{itemize}
+    \item Early identification of at-risk students
+    \item Increased student engagement through gamification
+    \item Data-driven teacher interventions
+    \item Comprehensive administrative oversight
+\end{itemize}
+
+With proper implementation and continuous improvement, EduTrack AI can significantly enhance educational outcomes and student success rates.
+
+\appendix
+
+\chapter{Code Snippets}
+
+\section{Complete Student Profile Creation}
+
+\begin{lstlisting}
+// Frontend: StudentSetup.tsx
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    await createStudent({
+      fullName,
+      studentId,
+      grade,
+      section
+    });
+    navigate("/student/dashboard");
+  } catch (error) {
+    toast.error("Failed to create profile");
+  }
+};
+
+// Backend: students.ts
+export const create = mutation({
+  args: {
+    fullName: v.string(),
+    studentId: v.string(),
+    grade: v.string(),
+    section: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getAuthUserId(ctx);
+    if (!userId) throw new Error("Not authenticated");
+    
+    const existing = await ctx.db
+      .query("students")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first();
+    
+    if (existing) {
+      throw new Error("Student profile already exists");
+    }
+    
+    await ctx.db.patch(userId, { role: "student" });
+    
+    return await ctx.db.insert("students", {
+      userId,
+      fullName: args.fullName,
+      studentId: args.studentId,
+      grade: args.grade,
+      section: args.section,
+      currentGPA: 3.0,
+      assignmentCompletionRate: 80,
+      testScoreAverage: 75,
+      attendanceRate: 90,
+      totalAbsences: 0,
+      tardinessCount: 0,
+      loginFrequency: 5,
+      classParticipationScore: 70,
+      challengeCompletionRate: 0,
+      hasScholarship: false,
+      feePaymentStatus: "current",
+      xp: 0,
+      level: 1,
+      currentStreak: 0,
+      longestStreak: 0,
+      badges: [],
+    });
+  },
+});
+\end{lstlisting}
+
+\section{Risk Assessment Calculation}
+
+\begin{lstlisting}
+// Backend: riskAssessments.ts
+export const calculateRiskScore = (student: Student): RiskAssessment => {
+  // Calculate individual risk factors (0-100)
+  const academicRisk = 100 - (student.currentGPA / 4.0) * 100;
+  const attendanceRisk = 100 - student.attendanceRate;
+  const engagementRisk = 100 - student.loginFrequency * 10;
+  const financialRisk = student.feePaymentStatus === "overdue" ? 100 : 
+                        student.feePaymentStatus === "delayed" ? 50 : 0;
+  const socialRisk = 100 - student.classParticipationScore;
+  
+  // Calculate weighted risk score
+  const riskScore = (
+    academicRisk * 0.35 +
+    attendanceRisk * 0.25 +
+    engagementRisk * 0.20 +
+    financialRisk * 0.15 +
+    socialRisk * 0.05
+  );
+  
+  // Classify risk level
+  const riskLevel = riskScore >= 70 ? "high" : 
+                    riskScore >= 40 ? "moderate" : "low";
+  
+  // Generate recommendations
+  const recommendations = [];
+  if (academicRisk > 60) recommendations.push("Increase study time");
+  if (attendanceRisk > 60) recommendations.push("Improve attendance");
+  if (engagementRisk > 60) recommendations.push("Increase engagement");
+  if (financialRisk > 50) recommendations.push("Address financial issues");
+  if (socialRisk > 60) recommendations.push("Increase participation");
+  
+  return {
+    riskLevel,
+    riskScore,
+    academicRisk,
+    attendanceRisk,
+    engagementRisk,
+    financialRisk,
+    socialRisk,
+    recommendations,
+    predictedDropoutProbability: riskScore
+  };
+};
+\end{lstlisting}
+
+\end{document}
