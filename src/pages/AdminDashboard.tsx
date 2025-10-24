@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BarChart3, Download, Loader2, LogOut, Search, Users, X, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Award, Flame } from "lucide-react";
+import { BarChart3, Download, Loader2, LogOut, Search, Users, X, ChevronDown, ChevronUp, AlertTriangle, TrendingUp, Award, Flame, CheckCircle, Clock, AlertCircle, Target } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ export default function AdminDashboard() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
+  const [expandedTeacher, setExpandedTeacher] = useState<string | null>(null);
 
   const students = useQuery(api.admin.getAllStudents);
   const teachers = useQuery(api.admin.getAllTeachers);
@@ -136,7 +137,8 @@ export default function AdminDashboard() {
   const filteredTeachers = teachers?.filter(
     (t) =>
       t.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.teacherId.toLowerCase().includes(searchTerm.toLowerCase())
+      t.teacherId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.department.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
   const getRiskBadgeColor = (riskLevel?: string) => {
@@ -146,8 +148,25 @@ export default function AdminDashboard() {
     return "bg-red-100 text-red-800";
   };
 
+  const getStatusBadgeColor = (status: string) => {
+    if (status === "completed") return "bg-green-100 text-green-800";
+    if (status === "in-progress") return "bg-blue-100 text-blue-800";
+    if (status === "planned") return "bg-gray-100 text-gray-800";
+    return "bg-red-100 text-red-800";
+  };
+
+  const getPriorityBadgeColor = (priority: string) => {
+    if (priority === "high") return "bg-red-100 text-red-800";
+    if (priority === "medium") return "bg-yellow-100 text-yellow-800";
+    return "bg-blue-100 text-blue-800";
+  };
+
   const toggleStudentExpand = (studentId: string) => {
     setExpandedStudent(expandedStudent === studentId ? null : studentId);
+  };
+
+  const toggleTeacherExpand = (teacherId: string) => {
+    setExpandedTeacher(expandedTeacher === teacherId ? null : teacherId);
   };
 
   return (
@@ -487,51 +506,174 @@ export default function AdminDashboard() {
 
                 <TabsContent value="teachers" className="space-y-4">
                   {filteredTeachers.length > 0 ? (
-                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
-                      <table className="w-full text-sm">
-                        <thead className="bg-gray-50 dark:bg-gray-800">
-                          <tr>
-                            <th className="text-left py-3 px-4 font-medium">Name</th>
-                            <th className="text-left py-3 px-4 font-medium">Teacher ID</th>
-                            <th className="text-left py-3 px-4 font-medium">Department</th>
-                            <th className="text-left py-3 px-4 font-medium">Subjects</th>
-                            <th className="text-left py-3 px-4 font-medium">Level</th>
-                            <th className="text-left py-3 px-4 font-medium">Interventions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {filteredTeachers.map((teacher) => (
-                            <motion.tr
-                              key={teacher._id}
-                              className="border-b hover:bg-purple-50 dark:hover:bg-gray-700/50 transition-colors"
-                              whileHover={{ backgroundColor: "rgba(147, 51, 234, 0.05)" }}
-                            >
-                              <td className="py-3 px-4 font-medium">{teacher.fullName}</td>
-                              <td className="py-3 px-4 text-muted-foreground">{teacher.teacherId}</td>
-                              <td className="py-3 px-4">{teacher.department}</td>
-                              <td className="py-3 px-4">
-                                <div className="flex flex-wrap gap-1">
-                                  {teacher.subjects.map((subject, idx) => (
-                                    <Badge key={idx} variant="outline" className="text-xs">
-                                      {subject}
-                                    </Badge>
-                                  ))}
+                    <div className="space-y-2">
+                      {filteredTeachers.map((teacher) => (
+                        <motion.div
+                          key={teacher._id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="border rounded-lg overflow-hidden"
+                        >
+                          {/* Main Row */}
+                          <div
+                            className="p-4 hover:bg-purple-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                            onClick={() => toggleTeacherExpand(teacher._id)}
+                          >
+                            <div className="grid grid-cols-6 gap-4 items-center">
+                              <div className="col-span-2">
+                                <div className="font-medium">{teacher.fullName}</div>
+                                <div className="text-xs text-muted-foreground">{teacher.teacherId}</div>
+                              </div>
+                              <div>
+                                <div className="text-sm">{teacher.department}</div>
+                                <div className="text-xs text-muted-foreground">
+                                  {teacher.subjects.slice(0, 2).join(", ")}
                                 </div>
-                              </td>
-                              <td className="py-3 px-4">
+                              </div>
+                              <div>
                                 <Badge variant="secondary" className="bg-purple-100 text-purple-700">
                                   Level {teacher.level}
                                 </Badge>
                                 <div className="text-xs text-muted-foreground mt-1">{teacher.xp} XP</div>
-                              </td>
-                              <td className="py-3 px-4">
-                                <div className="text-sm">{teacher.interventionsCompleted} completed</div>
-                                <div className="text-xs text-muted-foreground">{teacher.successfulInterventions} successful</div>
-                              </td>
-                            </motion.tr>
-                          ))}
-                        </tbody>
-                      </table>
+                              </div>
+                              <div>
+                                <div className="text-sm font-semibold">{teacher.stats?.totalInterventions || 0} Tasks</div>
+                                <div className="text-xs text-muted-foreground">{teacher.stats?.completedInterventions || 0} completed</div>
+                              </div>
+                              <div className="flex justify-end">
+                                {expandedTeacher === teacher._id ? (
+                                  <ChevronUp className="h-5 w-5" />
+                                ) : (
+                                  <ChevronDown className="h-5 w-5" />
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Expanded Details */}
+                          <AnimatePresence>
+                            {expandedTeacher === teacher._id && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="border-t bg-gray-50 dark:bg-gray-800/50"
+                              >
+                                <div className="p-6 space-y-6">
+                                  {/* Teacher Stats */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                      <BarChart3 className="h-4 w-4" />
+                                      Performance Metrics
+                                    </h4>
+                                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Total Interventions</div>
+                                        <div className="text-lg font-bold">{teacher.stats?.totalInterventions || 0}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Completed</div>
+                                        <div className="text-lg font-bold text-green-600">{teacher.stats?.completedInterventions || 0}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">In Progress</div>
+                                        <div className="text-lg font-bold text-blue-600">{teacher.stats?.inProgressInterventions || 0}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">Planned</div>
+                                        <div className="text-lg font-bold text-gray-600">{teacher.stats?.plannedInterventions || 0}</div>
+                                      </div>
+                                      <div>
+                                        <div className="text-xs text-muted-foreground mb-1">High Priority</div>
+                                        <div className="text-lg font-bold text-red-600">{teacher.stats?.highPriorityInterventions || 0}</div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Subjects */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3">Subjects</h4>
+                                    <div className="flex flex-wrap gap-2">
+                                      {teacher.subjects.map((subject, idx) => (
+                                        <Badge key={idx} variant="outline" className="text-sm">
+                                          {subject}
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  {/* Interventions List */}
+                                  <div>
+                                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                      <Target className="h-4 w-4" />
+                                      Interventions & Tasks ({teacher.interventions?.length || 0})
+                                    </h4>
+                                    {teacher.interventions && teacher.interventions.length > 0 ? (
+                                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                                        {teacher.interventions.map((intervention) => (
+                                          <div key={intervention._id} className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
+                                            <div className="flex justify-between items-start mb-2">
+                                              <div className="flex-1">
+                                                <h5 className="font-medium">{intervention.title}</h5>
+                                                <p className="text-sm text-muted-foreground mt-1">{intervention.description}</p>
+                                              </div>
+                                              <div className="flex gap-2">
+                                                <Badge className={getStatusBadgeColor(intervention.status)}>
+                                                  {intervention.status === "completed" && <CheckCircle className="h-3 w-3 mr-1" />}
+                                                  {intervention.status === "in-progress" && <Clock className="h-3 w-3 mr-1" />}
+                                                  {intervention.status === "planned" && <AlertCircle className="h-3 w-3 mr-1" />}
+                                                  {intervention.status}
+                                                </Badge>
+                                                <Badge className={getPriorityBadgeColor(intervention.priority)}>
+                                                  {intervention.priority}
+                                                </Badge>
+                                              </div>
+                                            </div>
+                                            
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
+                                              <div>
+                                                <div className="text-xs text-muted-foreground">Student</div>
+                                                <div className="font-medium">{intervention.student?.fullName || "N/A"}</div>
+                                              </div>
+                                              <div>
+                                                <div className="text-xs text-muted-foreground">Type</div>
+                                                <div className="font-medium capitalize">{intervention.type}</div>
+                                              </div>
+                                              <div>
+                                                <div className="text-xs text-muted-foreground">Initial Risk</div>
+                                                <div className="font-medium">{intervention.initialRiskScore.toFixed(1)}%</div>
+                                              </div>
+                                              {intervention.effectiveness !== undefined && (
+                                                <div>
+                                                  <div className="text-xs text-muted-foreground">Effectiveness</div>
+                                                  <div className="font-medium text-green-600">{intervention.effectiveness.toFixed(0)}%</div>
+                                                </div>
+                                              )}
+                                            </div>
+
+                                            {intervention.notes && (
+                                              <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
+                                                <span className="text-muted-foreground">Notes: </span>
+                                                {intervention.notes}
+                                              </div>
+                                            )}
+                                          </div>
+                                        ))}
+                                      </div>
+                                    ) : (
+                                      <div className="text-center py-8 text-muted-foreground">
+                                        <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                                        <p>No interventions created yet</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-center py-12 text-muted-foreground">

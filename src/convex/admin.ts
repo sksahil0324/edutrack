@@ -27,11 +27,53 @@ export const getAllStudents = query({
   },
 });
 
-// Get all teachers
+// Get all teachers with their interventions
 export const getAllTeachers = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db.query("teachers").collect();
+    const teachers = await ctx.db.query("teachers").collect();
+    
+    // Fetch interventions for each teacher
+    const teachersWithInterventions = await Promise.all(
+      teachers.map(async (teacher) => {
+        const interventions = await ctx.db
+          .query("interventions")
+          .withIndex("by_teacher", (q) => q.eq("teacherId", teacher._id))
+          .collect();
+        
+        // Get student details for each intervention
+        const interventionsWithStudents = await Promise.all(
+          interventions.map(async (intervention) => {
+            const student = await ctx.db.get(intervention.studentId);
+            return {
+              ...intervention,
+              student,
+            };
+          })
+        );
+        
+        // Calculate statistics
+        const totalInterventions = interventions.length;
+        const completedInterventions = interventions.filter(i => i.status === "completed").length;
+        const inProgressInterventions = interventions.filter(i => i.status === "in-progress").length;
+        const plannedInterventions = interventions.filter(i => i.status === "planned").length;
+        const highPriorityInterventions = interventions.filter(i => i.priority === "high").length;
+        
+        return {
+          ...teacher,
+          interventions: interventionsWithStudents,
+          stats: {
+            totalInterventions,
+            completedInterventions,
+            inProgressInterventions,
+            plannedInterventions,
+            highPriorityInterventions,
+          },
+        };
+      })
+    );
+    
+    return teachersWithInterventions;
   },
 });
 
