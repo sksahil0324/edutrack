@@ -60,7 +60,7 @@ export default function TeacherSetup() {
       });
       
       toast.success("Profile created successfully!");
-      navigate("/teacher-dashboard");
+      navigate("/teacher/dashboard");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to create profile");
     } finally {
