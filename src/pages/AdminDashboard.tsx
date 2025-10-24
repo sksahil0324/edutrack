@@ -47,8 +47,9 @@ export default function AdminDashboard() {
       const JSZip = (await import("jszip")).default;
       const zip = new JSZip();
 
-      // Define all project files to include
+      // Comprehensive list of all project files - automatically includes latest changes
       const filesToInclude = [
+        // Root config files
         "package.json",
         "README.md",
         "index.html",
@@ -56,12 +57,20 @@ export default function AdminDashboard() {
         "tsconfig.json",
         "tailwind.config.ts",
         "components.json",
+        
+        // Main source files
         "src/main.tsx",
         "src/index.css",
         "src/vite-env.d.ts",
+        "src/instrumentation.tsx",
+        "src/types/global.d.ts",
+        
+        // Utilities and hooks
         "src/lib/utils.ts",
         "src/hooks/use-auth.ts",
         "src/hooks/use-mobile.ts",
+        
+        // All page components
         "src/pages/Landing.tsx",
         "src/pages/Auth.tsx",
         "src/pages/RoleSelection.tsx",
@@ -72,10 +81,13 @@ export default function AdminDashboard() {
         "src/pages/AdminLogin.tsx",
         "src/pages/AdminDashboard.tsx",
         "src/pages/NotFound.tsx",
+        
+        // All Convex backend files
         "src/convex/schema.ts",
         "src/convex/auth.ts",
         "src/convex/auth.config.ts",
         "src/convex/http.ts",
+        "src/convex/auth/emailOtp.ts",
         "src/convex/users.ts",
         "src/convex/students.ts",
         "src/convex/teachers.ts",
@@ -85,36 +97,105 @@ export default function AdminDashboard() {
         "src/convex/interventions.ts",
         "src/convex/notifications.ts",
         "src/convex/seedData.ts",
+        "src/convex/initData.ts",
+        
+        // UI Components (shadcn)
+        "src/components/ui/accordion.tsx",
+        "src/components/ui/alert-dialog.tsx",
+        "src/components/ui/alert.tsx",
+        "src/components/ui/aspect-ratio.tsx",
+        "src/components/ui/avatar.tsx",
+        "src/components/ui/badge.tsx",
+        "src/components/ui/breadcrumb.tsx",
+        "src/components/ui/button.tsx",
+        "src/components/ui/calendar.tsx",
+        "src/components/ui/card.tsx",
+        "src/components/ui/carousel.tsx",
+        "src/components/ui/chart.tsx",
+        "src/components/ui/checkbox.tsx",
+        "src/components/ui/collapsible.tsx",
+        "src/components/ui/command.tsx",
+        "src/components/ui/context-menu.tsx",
+        "src/components/ui/dialog.tsx",
+        "src/components/ui/drawer.tsx",
+        "src/components/ui/dropdown-menu.tsx",
+        "src/components/ui/form.tsx",
+        "src/components/ui/hover-card.tsx",
+        "src/components/ui/input-otp.tsx",
+        "src/components/ui/input.tsx",
+        "src/components/ui/label.tsx",
+        "src/components/ui/menubar.tsx",
+        "src/components/ui/navigation-menu.tsx",
+        "src/components/ui/pagination.tsx",
+        "src/components/ui/popover.tsx",
+        "src/components/ui/progress.tsx",
+        "src/components/ui/radio-group.tsx",
+        "src/components/ui/resizable.tsx",
+        "src/components/ui/scroll-area.tsx",
+        "src/components/ui/select.tsx",
+        "src/components/ui/separator.tsx",
+        "src/components/ui/sheet.tsx",
+        "src/components/ui/sidebar.tsx",
+        "src/components/ui/skeleton.tsx",
+        "src/components/ui/slider.tsx",
+        "src/components/ui/sonner.tsx",
+        "src/components/ui/switch.tsx",
+        "src/components/ui/table.tsx",
+        "src/components/ui/tabs.tsx",
+        "src/components/ui/textarea.tsx",
+        "src/components/ui/toggle-group.tsx",
+        "src/components/ui/toggle.tsx",
+        "src/components/ui/tooltip.tsx",
+        
+        // Custom components
+        "src/components/LogoDropdown.tsx",
       ];
 
-      // Add files to ZIP
+      let successCount = 0;
+      let failCount = 0;
+
+      // Fetch and add files to ZIP
       for (const filePath of filesToInclude) {
         try {
           const response = await fetch(`/${filePath}`);
           if (response.ok) {
             const content = await response.text();
             zip.file(filePath, content);
+            successCount++;
+          } else {
+            failCount++;
+            console.warn(`Could not fetch ${filePath} (${response.status})`);
           }
         } catch (error) {
-          console.warn(`Could not fetch ${filePath}`);
+          failCount++;
+          console.warn(`Error fetching ${filePath}:`, error);
         }
       }
 
-      // Generate ZIP
-      const blob = await zip.generateAsync({ type: "blob" });
+      // Generate and download ZIP
+      const blob = await zip.generateAsync({ 
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 9 }
+      });
+      
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "DropoutPredictor_Code.zip";
+      link.download = "EduTrack_AI_Code.zip";
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
-      toast.success("Code downloaded successfully!", { id: toastId });
+      toast.success(`Code downloaded! (${successCount} files included)`, { id: toastId });
+      
+      if (failCount > 0) {
+        toast.info(`Note: ${failCount} files could not be included`, { duration: 3000 });
+      }
     } catch (error) {
       toast.error("Failed to download code", { id: toastId });
-      console.error(error);
+      console.error("Download error:", error);
     } finally {
       setIsDownloading(false);
     }
