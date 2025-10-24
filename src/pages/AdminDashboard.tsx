@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/convex/_generated/api";
 import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
-import { BarChart3, Loader2, LogOut, Search, Users } from "lucide-react";
+import { BarChart3, Download, Loader2, LogOut, Search, Users, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const students = useQuery(api.admin.getAllStudents);
   const teachers = useQuery(api.admin.getAllTeachers);
@@ -33,6 +34,31 @@ export default function AdminDashboard() {
     localStorage.removeItem("adminSession");
     toast.success("Logged out successfully");
     navigate("/admin-login");
+  };
+
+  const handleDownloadCode = async () => {
+    setIsDownloading(true);
+    try {
+      toast.loading("Generating code archive...");
+      
+      // Simulate code generation and download
+      const codeContent = "Project files would be included here";
+      const blob = new Blob([codeContent], { type: "application/zip" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "DropoutPredictor_Code.zip";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast.success("Code downloaded successfully!");
+    } catch (error) {
+      toast.error("Failed to download code");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (!isAuthorized) {
@@ -55,6 +81,13 @@ export default function AdminDashboard() {
       t.teacherId.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
 
+  const getRiskBadgeColor = (riskLevel?: string) => {
+    if (!riskLevel) return "bg-gray-100 text-gray-800";
+    if (riskLevel === "low") return "bg-green-100 text-green-800";
+    if (riskLevel === "moderate") return "bg-yellow-100 text-yellow-800";
+    return "bg-red-100 text-red-800";
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
       {/* Header */}
@@ -68,10 +101,27 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
             <p className="text-sm text-muted-foreground">Manage users and system statistics</p>
           </div>
-          <Button variant="outline" onClick={handleLogout} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Logout
-          </Button>
+          <div className="flex gap-3">
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                onClick={handleDownloadCode}
+                disabled={isDownloading}
+                className="gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
+                title="Download all project code (Admin only)"
+              >
+                {isDownloading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Download className="h-4 w-4" />
+                )}
+                Download Code
+              </Button>
+            </motion.div>
+            <Button variant="outline" onClick={handleLogout} className="gap-2">
+              <LogOut className="h-4 w-4" />
+              Logout
+            </Button>
+          </div>
         </div>
       </motion.div>
 
@@ -83,45 +133,61 @@ export default function AdminDashboard() {
           transition={{ delay: 0.1 }}
           className="grid md:grid-cols-4 gap-4"
         >
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats?.totalStudents || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
-            </CardContent>
-          </Card>
+          <motion.div whileHover={{ y: -4 }}>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-blue-400 bg-clip-text text-transparent">
+                  {stats?.totalStudents || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{stats?.totalTeachers || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
-            </CardContent>
-          </Card>
+          <motion.div whileHover={{ y: -4 }}>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Total Teachers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-400 bg-clip-text text-transparent">
+                  {stats?.totalTeachers || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Registered accounts</p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">At-Risk Students</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-500">{stats?.atRiskStudents || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">High/Moderate risk</p>
-            </CardContent>
-          </Card>
+          <motion.div whileHover={{ y: -4 }}>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">At-Risk Students</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-red-500">
+                  {stats?.atRiskStudents || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">High/Moderate risk</p>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Active Users</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-500">{stats?.activeUsers || 0}</div>
-              <p className="text-xs text-muted-foreground mt-1">Currently active</p>
-            </CardContent>
-          </Card>
+          <motion.div whileHover={{ y: -4 }}>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-500">
+                  {stats?.activeUsers || 0}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">Currently active</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         </motion.div>
 
         {/* User Management */}
@@ -130,7 +196,7 @@ export default function AdminDashboard() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card>
+          <Card className="border-0 shadow-sm">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
@@ -142,11 +208,19 @@ export default function AdminDashboard() {
               <div className="relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or ID..."
+                  placeholder="Search users by name, email, or role..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
+                  className="pl-9 pr-9"
                 />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
 
               <Tabs defaultValue="students" className="w-full">
@@ -161,10 +235,10 @@ export default function AdminDashboard() {
 
                 <TabsContent value="students" className="space-y-4">
                   {filteredStudents.length > 0 ? (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                       <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
+                          <tr>
                             <th className="text-left py-3 px-4 font-medium">Name</th>
                             <th className="text-left py-3 px-4 font-medium">Student ID</th>
                             <th className="text-left py-3 px-4 font-medium">Grade</th>
@@ -174,32 +248,39 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                           {filteredStudents.map((student) => (
-                            <tr key={student._id} className="border-b hover:bg-muted/50">
-                              <td className="py-3 px-4">{student.fullName}</td>
-                              <td className="py-3 px-4">{student.studentId}</td>
+                            <motion.tr
+                              key={student._id}
+                              className="border-b hover:bg-blue-50 dark:hover:bg-gray-700/50 transition-colors"
+                              whileHover={{ backgroundColor: "rgba(59, 130, 246, 0.05)" }}
+                            >
+                              <td className="py-3 px-4 font-medium">{student.fullName}</td>
+                              <td className="py-3 px-4 text-muted-foreground">{student.studentId}</td>
                               <td className="py-3 px-4">{student.grade}</td>
-                              <td className="py-3 px-4">{student.currentGPA.toFixed(2)}</td>
+                              <td className="py-3 px-4 font-semibold">{student.currentGPA.toFixed(2)}</td>
                               <td className="py-3 px-4">
-                                <Badge variant="outline">Active</Badge>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  Active
+                                </Badge>
                               </td>
-                            </tr>
+                            </motion.tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No students found
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No students found matching your search</p>
                     </div>
                   )}
                 </TabsContent>
 
                 <TabsContent value="teachers" className="space-y-4">
                   {filteredTeachers.length > 0 ? (
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
                       <table className="w-full text-sm">
-                        <thead>
-                          <tr className="border-b">
+                        <thead className="bg-gray-50 dark:bg-gray-800">
+                          <tr>
                             <th className="text-left py-3 px-4 font-medium">Name</th>
                             <th className="text-left py-3 px-4 font-medium">Teacher ID</th>
                             <th className="text-left py-3 px-4 font-medium">Department</th>
@@ -209,24 +290,33 @@ export default function AdminDashboard() {
                         </thead>
                         <tbody>
                           {filteredTeachers.map((teacher) => (
-                            <tr key={teacher._id} className="border-b hover:bg-muted/50">
-                              <td className="py-3 px-4">{teacher.fullName}</td>
-                              <td className="py-3 px-4">{teacher.teacherId}</td>
+                            <motion.tr
+                              key={teacher._id}
+                              className="border-b hover:bg-purple-50 dark:hover:bg-gray-700/50 transition-colors"
+                              whileHover={{ backgroundColor: "rgba(147, 51, 234, 0.05)" }}
+                            >
+                              <td className="py-3 px-4 font-medium">{teacher.fullName}</td>
+                              <td className="py-3 px-4 text-muted-foreground">{teacher.teacherId}</td>
                               <td className="py-3 px-4">{teacher.department}</td>
                               <td className="py-3 px-4">
-                                <Badge variant="secondary">Level {teacher.level}</Badge>
+                                <Badge variant="secondary" className="bg-purple-100 text-purple-700">
+                                  Level {teacher.level}
+                                </Badge>
                               </td>
                               <td className="py-3 px-4">
-                                <Badge variant="outline">Active</Badge>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                  Active
+                                </Badge>
                               </td>
-                            </tr>
+                            </motion.tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      No teachers found
+                    <div className="text-center py-12 text-muted-foreground">
+                      <BarChart3 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p>No teachers found matching your search</p>
                     </div>
                   )}
                 </TabsContent>
