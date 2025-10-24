@@ -177,6 +177,18 @@ export default function Landing() {
           </Button>
         </div>
       </motion.div>
+
+      {/* Admin Login Footer */}
+      <div className="container mx-auto px-4 py-8 text-center">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/admin-login")}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          Admin Login
+        </Button>
+      </div>
     </div>
   );
 }
