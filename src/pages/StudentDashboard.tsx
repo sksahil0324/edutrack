@@ -14,8 +14,8 @@ export default function StudentDashboard() {
   const navigate = useNavigate();
   
   const student = useQuery(api.students.getCurrentStudent);
-  const riskAssessment = student ? useQuery(api.riskAssessments.getLatestForStudent, { studentId: student._id }) : null;
-  const studentChallenges = student ? useQuery(api.challenges.getStudentChallenges, { studentId: student._id }) : null;
+  const riskAssessment = useQuery(api.riskAssessments.getLatestForStudent, student ? { studentId: student._id } : "skip");
+  const studentChallenges = useQuery(api.challenges.getStudentChallenges, student ? { studentId: student._id } : "skip");
 
   if (authLoading || student === undefined) {
     return (
