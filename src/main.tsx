@@ -15,6 +15,8 @@ import StudentSetup from "./pages/StudentSetup.tsx";
 import TeacherSetup from "./pages/TeacherSetup.tsx";
 import StudentDashboard from "./pages/StudentDashboard.tsx";
 import TeacherDashboard from "./pages/TeacherDashboard.tsx";
+import AdminLogin from "./pages/AdminLogin.tsx";
+import AdminDashboard from "./pages/AdminDashboard.tsx";
 import "./types/global.d.ts";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL as string);
@@ -60,6 +62,8 @@ createRoot(document.getElementById("root")!).render(
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/teacher/setup" element={<TeacherSetup />} />
             <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

@@ -202,6 +202,16 @@ const schema = defineSchema(
       description: v.string(),
       metadata: v.optional(v.string()), // JSON string
     }).index("by_user", ["userId"]),
+
+    // Admin accounts
+    admins: defineTable({
+      adminId: v.string(),
+      password: v.string(), // hashed in production
+      fullName: v.string(),
+      email: v.string(),
+      isActive: v.boolean(),
+    })
+      .index("by_admin_id", ["adminId"]),
   },
   {
     schemaValidation: false,
