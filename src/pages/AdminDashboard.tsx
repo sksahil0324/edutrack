@@ -745,12 +745,21 @@ export default function AdminDashboard() {
                                               )}
                                             </div>
 
-                                            {intervention.notes && (
-                                              <div className="mt-3 p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm">
-                                                <span className="text-muted-foreground">Notes: </span>
-                                                {intervention.notes}
-                                              </div>
-                                            )}
+                                            <AnimatePresence>
+                                              {intervention.notes && (
+                                                <motion.div 
+                                                  key="notes"
+                                                  initial={{ opacity: 0, height: 0 }}
+                                                  animate={{ opacity: 1, height: "auto" }}
+                                                  exit={{ opacity: 0, height: 0 }}
+                                                  transition={{ duration: 0.3 }}
+                                                  className="mt-3 p-2 bg-gray-50 dark:bg-gray-900 rounded text-sm"
+                                                >
+                                                  <span className="text-muted-foreground">Notes: </span>
+                                                  {intervention.notes}
+                                                </motion.div>
+                                              )}
+                                            </AnimatePresence>
                                           </motion.div>
                                         ))}
                                       </motion.div>
