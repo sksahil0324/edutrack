@@ -8,6 +8,7 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, TrendingDown, TrendingUp, Trophy, Zap } from "lucide-react";
 import { useNavigate } from "react-router";
+import { LogoDropdown } from "@/components/LogoDropdown";
 
 export default function StudentDashboard() {
   const { user, isLoading: authLoading } = useAuth();
@@ -64,6 +65,7 @@ export default function StudentDashboard() {
             <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
               <Trophy className="w-8 h-8 text-primary" />
             </div>
+            <LogoDropdown />
           </div>
         </motion.div>
 
