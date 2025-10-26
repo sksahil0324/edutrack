@@ -7,12 +7,35 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { AlertTriangle, Loader2, LogOut, TrendingUp, Users } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export default function TeacherDashboard() {
   const { isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [teacherIdFromSession, setTeacherIdFromSession] = useState<Id<"teachers"> | null>(null);
   
-  const teacher = useQuery(api.teachers.getCurrentTeacher);
+  // Check sessionStorage for ID-based login
+  useEffect(() => {
+    const sessionData = sessionStorage.getItem("edutrack_user");
+    if (sessionData) {
+      try {
+        const userData = JSON.parse(sessionData);
+        if (userData.role === "teacher" && userData.profileId) {
+          setTeacherIdFromSession(userData.profileId);
+        }
+      } catch (error) {
+        console.error("Error parsing session data:", error);
+      }
+    }
+  }, []);
+  
+  const teacherFromAuth = useQuery(api.teachers.getCurrentTeacher);
+  const teacherFromId = useQuery(api.teachers.getById, teacherIdFromSession ? { teacherId: teacherIdFromSession } : "skip");
+  
+  // Use teacher from ID-based login if available, otherwise from auth
+  const teacher = teacherFromId || teacherFromAuth;
+  
   const students = useQuery(api.students.getAll);
 
   if (authLoading || teacher === undefined) {
@@ -30,6 +53,7 @@ export default function TeacherDashboard() {
 
   const handleSignOut = async () => {
     try {
+      sessionStorage.removeItem("edutrack_user");
       await signOut();
       navigate("/");
     } catch (error) {

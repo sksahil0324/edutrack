@@ -8,12 +8,35 @@ import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
 import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, TrendingDown, TrendingUp, Trophy, Zap } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useEffect, useState } from "react";
+import type { Id } from "@/convex/_generated/dataModel";
 
 export default function StudentDashboard() {
   const { user, isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [studentIdFromSession, setStudentIdFromSession] = useState<Id<"students"> | null>(null);
   
-  const student = useQuery(api.students.getCurrentStudent);
+  // Check sessionStorage for ID-based login
+  useEffect(() => {
+    const sessionData = sessionStorage.getItem("edutrack_user");
+    if (sessionData) {
+      try {
+        const userData = JSON.parse(sessionData);
+        if (userData.role === "student" && userData.profileId) {
+          setStudentIdFromSession(userData.profileId);
+        }
+      } catch (error) {
+        console.error("Error parsing session data:", error);
+      }
+    }
+  }, []);
+  
+  const studentFromAuth = useQuery(api.students.getCurrentStudent);
+  const studentFromId = useQuery(api.students.getById, studentIdFromSession ? { studentId: studentIdFromSession } : "skip");
+  
+  // Use student from ID-based login if available, otherwise from auth
+  const student = studentFromId || studentFromAuth;
+  
   const riskAssessment = useQuery(api.riskAssessments.getLatestForStudent, student ? { studentId: student._id } : "skip");
   const studentChallenges = useQuery(api.challenges.getStudentChallenges, student ? { studentId: student._id } : "skip");
 
@@ -32,6 +55,7 @@ export default function StudentDashboard() {
 
   const handleSignOut = async () => {
     try {
+      sessionStorage.removeItem("edutrack_user");
       await signOut();
       navigate("/");
     } catch (error) {

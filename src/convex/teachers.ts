@@ -16,6 +16,14 @@ export const getCurrentTeacher = query({
   },
 });
 
+// Get teacher by ID
+export const getById = query({
+  args: { teacherId: v.id("teachers") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.teacherId);
+  },
+});
+
 // Create teacher profile
 export const create = mutation({
   args: {
