@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, TrendingDown, TrendingUp, Trophy, Users, X } from "lucide-react";
+import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, Search, TrendingDown, TrendingUp, Trophy, Users, X } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -17,6 +18,7 @@ export default function TeacherDashboard() {
   const navigate = useNavigate();
   const [teacherIdFromSession, setTeacherIdFromSession] = useState<Id<"teachers"> | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<Id<"students"> | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   
   // Check sessionStorage for ID-based login
   useEffect(() => {
@@ -47,6 +49,16 @@ export default function TeacherDashboard() {
   );
   
   const selectedStudent = students?.find(s => s._id === selectedStudentId);
+
+  // Filter students based on search query
+  const filteredStudents = students?.filter((student) => {
+    if (!searchQuery.trim()) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      student.fullName.toLowerCase().includes(query) ||
+      student.studentId.toLowerCase().includes(query)
+    );
+  });
 
   if (authLoading || teacher === undefined) {
     return (
@@ -161,11 +173,30 @@ export default function TeacherDashboard() {
             <CardHeader>
               <CardTitle>Student Monitoring</CardTitle>
               <CardDescription>Overview of all students and their risk levels</CardDescription>
+              
+              {/* Search Bar */}
+              <div className="relative mt-4">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by name or student ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              {students && students.length > 0 ? (
+              {filteredStudents && filteredStudents.length > 0 ? (
                 <div className="space-y-3">
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <div key={student._id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                       <div className="flex-1">
                         <h4 className="font-medium">{student.fullName}</h4>
@@ -190,6 +221,10 @@ export default function TeacherDashboard() {
                       </div>
                     </div>
                   ))}
+                </div>
+              ) : searchQuery ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <p>No students found matching "{searchQuery}"</p>
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
