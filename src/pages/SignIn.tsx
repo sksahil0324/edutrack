@@ -30,11 +30,12 @@ function SignIn() {
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user && selectedRole) {
-      // Only redirect after user has selected a role and authenticated
+      // Redirect to setup pages instead of dashboards
+      // The setup pages will handle redirecting to dashboard if profile exists
       if (selectedRole === "student") {
-        navigate("/student/dashboard");
+        navigate("/student/setup");
       } else if (selectedRole === "teacher") {
-        navigate("/teacher/dashboard");
+        navigate("/teacher/setup");
       }
     }
   }, [authLoading, isAuthenticated, user, navigate, selectedRole]);
