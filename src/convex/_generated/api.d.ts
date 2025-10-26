@@ -21,6 +21,7 @@ import type * as http from "../http.js";
 import type * as idAuth from "../idAuth.js";
 import type * as initData from "../initData.js";
 import type * as interventions from "../interventions.js";
+import type * as migrateGPAtoCGPA from "../migrateGPAtoCGPA.js";
 import type * as notifications from "../notifications.js";
 import type * as riskAssessments from "../riskAssessments.js";
 import type * as seedData from "../seedData.js";
@@ -45,6 +46,7 @@ declare const fullApi: ApiFromModules<{
   idAuth: typeof idAuth;
   initData: typeof initData;
   interventions: typeof interventions;
+  migrateGPAtoCGPA: typeof migrateGPAtoCGPA;
   notifications: typeof notifications;
   riskAssessments: typeof riskAssessments;
   seedData: typeof seedData;
