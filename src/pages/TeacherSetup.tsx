@@ -27,7 +27,7 @@ export default function TeacherSetup() {
 
   // Redirect if teacher profile already exists
   useEffect(() => {
-    if (existingTeacher) {
+    if (existingTeacher !== undefined && existingTeacher !== null) {
       toast.info("You already have a teacher profile");
       navigate("/teacher/dashboard");
     }
