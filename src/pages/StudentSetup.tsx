@@ -5,9 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -15,6 +15,7 @@ export default function StudentSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const createStudent = useMutation(api.students.create);
+  const existingStudent = useQuery(api.students.getCurrentStudent);
   
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,6 +24,14 @@ export default function StudentSetup() {
     grade: "",
     section: "",
   });
+
+  // Redirect if student profile already exists
+  useEffect(() => {
+    if (existingStudent) {
+      toast.info("You already have a student profile");
+      navigate("/student/dashboard");
+    }
+  }, [existingStudent, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +53,15 @@ export default function StudentSetup() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking for existing profile
+  if (existingStudent === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">

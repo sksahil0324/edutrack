@@ -4,9 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
-import { useMutation } from "convex/react";
+import { useMutation, useQuery } from "convex/react";
 import { Loader2, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ export default function TeacherSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const createTeacher = useMutation(api.teachers.create);
+  const existingTeacher = useQuery(api.teachers.getCurrentTeacher);
   
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,6 +24,14 @@ export default function TeacherSetup() {
     subjects: [] as string[],
   });
   const [currentSubject, setCurrentSubject] = useState("");
+
+  // Redirect if teacher profile already exists
+  useEffect(() => {
+    if (existingTeacher) {
+      toast.info("You already have a teacher profile");
+      navigate("/teacher/dashboard");
+    }
+  }, [existingTeacher, navigate]);
 
   const addSubject = () => {
     if (currentSubject.trim() && !formData.subjects.includes(currentSubject.trim())) {
@@ -67,6 +76,15 @@ export default function TeacherSetup() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking for existing profile
+  if (existingTeacher === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
