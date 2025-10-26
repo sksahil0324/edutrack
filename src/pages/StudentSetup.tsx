@@ -27,7 +27,7 @@ export default function StudentSetup() {
 
   // Redirect if student profile already exists
   useEffect(() => {
-    if (existingStudent !== undefined && existingStudent !== null) {
+    if (existingStudent) {
       toast.info("You already have a student profile");
       navigate("/student/dashboard");
     }
