@@ -64,18 +64,7 @@ export default function Landing() {
             {isAuthenticated ? (
               <Button
                 size="lg"
-                onClick={() => {
-                  // Navigate based on user role
-                  if (user?.role === "student") {
-                    navigate("/student/dashboard");
-                  } else if (user?.role === "teacher") {
-                    navigate("/teacher/dashboard");
-                  } else if (user?.role === "admin") {
-                    navigate("/admin-dashboard");
-                  } else {
-                    navigate("/role-selection");
-                  }
-                }}
+                onClick={() => navigate("/sign-in")}
                 className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
                 Go to Dashboard
