@@ -5,12 +5,11 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Loader2, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, Loader2, LogOut, TrendingUp, Users } from "lucide-react";
 import { useNavigate } from "react-router";
-import { LogoDropdown } from "@/components/LogoDropdown";
 
 export default function TeacherDashboard() {
-  const { isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   
   const teacher = useQuery(api.teachers.getCurrentTeacher);
@@ -29,6 +28,15 @@ export default function TeacherDashboard() {
     return null;
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate("/");
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
+  };
+
   const getRiskColor = (level?: string) => {
     if (!level) return "bg-muted";
     if (level === "low") return "bg-green-500";
@@ -39,7 +47,7 @@ export default function TeacherDashboard() {
   return (
     <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        {/* Header with Logo Dropdown */}
+        {/* Header with Sign Out Button */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -49,7 +57,10 @@ export default function TeacherDashboard() {
             <h1 className="text-3xl font-bold tracking-tight">Teacher Dashboard</h1>
             <p className="text-muted-foreground">Monitor students and manage interventions</p>
           </div>
-          <LogoDropdown />
+          <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Sign Out
+          </Button>
         </motion.div>
 
         {/* Stats */}
