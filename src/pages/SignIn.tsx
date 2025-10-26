@@ -29,17 +29,12 @@ function SignIn() {
   const [selectedRole, setSelectedRole] = useState<"student" | "teacher" | null>(null);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated && user) {
-      // Redirect based on selected role or user role
-      if (selectedRole === "student" || user.role === "student") {
+    if (!authLoading && isAuthenticated && user && selectedRole) {
+      // Only redirect after user has selected a role and authenticated
+      if (selectedRole === "student") {
         navigate("/student/dashboard");
-      } else if (selectedRole === "teacher" || user.role === "teacher") {
+      } else if (selectedRole === "teacher") {
         navigate("/teacher/dashboard");
-      } else if (user.role === "admin") {
-        navigate("/admin-dashboard");
-      } else {
-        // No role yet, go to role selection
-        navigate("/role-selection");
       }
     }
   }, [authLoading, isAuthenticated, user, navigate, selectedRole]);
