@@ -48,7 +48,7 @@ const schema = defineSchema(
       userId: v.id("users"),
       fullName: v.string(),
       studentId: v.string(),
-      grade: v.string(),
+      grade: v.string(), // B.Tech year: "1", "2", "3", "4"
       section: v.optional(v.string()),
       
       // Academic metrics

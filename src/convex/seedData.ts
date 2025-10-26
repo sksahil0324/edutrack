@@ -89,7 +89,7 @@ export const seedDatabase = mutation({
       "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
     ];
 
-    const grades = ["9", "10", "11", "12"];
+    const grades = ["1", "2", "3", "4"];
     const sections = ["A", "B", "C", "D"];
 
     const studentIds: Array<string> = [];
@@ -246,9 +246,9 @@ export const createDemoAccounts = mutation({
   handler: async (ctx) => {
     const demoAccounts = {
       students: [
-        { email: "student1@demo.com", name: "Alice Johnson", studentId: "DEMO001", grade: "10", section: "A" },
-        { email: "student2@demo.com", name: "Bob Smith", studentId: "DEMO002", grade: "11", section: "B" },
-        { email: "student3@demo.com", name: "Carol Davis", studentId: "DEMO003", grade: "12", section: "A" },
+        { email: "student1@demo.com", name: "Alice Johnson", studentId: "DEMO001", grade: "2", section: "A" },
+        { email: "student2@demo.com", name: "Bob Smith", studentId: "DEMO002", grade: "3", section: "B" },
+        { email: "student3@demo.com", name: "Carol Davis", studentId: "DEMO003", grade: "4", section: "A" },
       ],
       teachers: [
         { email: "teacher1@demo.com", name: "Dr. Emma Wilson", teacherId: "TEACH001", department: "Mathematics", subjects: ["Algebra", "Calculus"] },
