@@ -25,7 +25,25 @@ export default function TeacherSetup() {
   });
   const [currentSubject, setCurrentSubject] = useState("");
 
-  // Redirect if teacher profile already exists
+  // Check for ID-based login session
+  useEffect(() => {
+    const sessionData = sessionStorage.getItem("edutrack_user");
+    if (sessionData) {
+      try {
+        const userData = JSON.parse(sessionData);
+        if (userData.role === "teacher" && userData.profileId) {
+          // User already has a profile from ID-based login
+          toast.info("You already have a teacher profile");
+          navigate("/teacher/dashboard");
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing session data:", error);
+      }
+    }
+  }, [navigate]);
+
+  // Redirect if teacher profile already exists (for email OTP users)
   useEffect(() => {
     if (existingTeacher) {
       toast.info("You already have a teacher profile");

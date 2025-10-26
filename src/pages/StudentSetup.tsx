@@ -25,7 +25,25 @@ export default function StudentSetup() {
     section: "",
   });
 
-  // Redirect if student profile already exists
+  // Check for ID-based login session
+  useEffect(() => {
+    const sessionData = sessionStorage.getItem("edutrack_user");
+    if (sessionData) {
+      try {
+        const userData = JSON.parse(sessionData);
+        if (userData.role === "student" && userData.profileId) {
+          // User already has a profile from ID-based login
+          toast.info("You already have a student profile");
+          navigate("/student/dashboard");
+          return;
+        }
+      } catch (error) {
+        console.error("Error parsing session data:", error);
+      }
+    }
+  }, [navigate]);
+
+  // Redirect if student profile already exists (for email OTP users)
   useEffect(() => {
     if (existingStudent) {
       toast.info("You already have a student profile");
