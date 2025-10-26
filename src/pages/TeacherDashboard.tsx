@@ -1,11 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "convex/react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Loader2, LogOut, TrendingUp, Users } from "lucide-react";
+import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, TrendingDown, TrendingUp, Trophy, Users, X } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
@@ -14,6 +16,7 @@ export default function TeacherDashboard() {
   const { isLoading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
   const [teacherIdFromSession, setTeacherIdFromSession] = useState<Id<"teachers"> | null>(null);
+  const [selectedStudentId, setSelectedStudentId] = useState<Id<"students"> | null>(null);
   
   // Check sessionStorage for ID-based login
   useEffect(() => {
@@ -33,10 +36,17 @@ export default function TeacherDashboard() {
   const teacherFromAuth = useQuery(api.teachers.getCurrentTeacher);
   const teacherFromId = useQuery(api.teachers.getById, teacherIdFromSession ? { teacherId: teacherIdFromSession } : "skip");
   
-  // Use teacher from ID-based login if available, otherwise from auth
   const teacher = teacherFromId || teacherFromAuth;
   
   const students = useQuery(api.students.getAll);
+  
+  // Fetch selected student's risk assessment
+  const selectedStudentRisk = useQuery(
+    api.riskAssessments.getLatestForStudent,
+    selectedStudentId ? { studentId: selectedStudentId } : "skip"
+  );
+  
+  const selectedStudent = students?.find(s => s._id === selectedStudentId);
 
   if (authLoading || teacher === undefined) {
     return (
@@ -66,6 +76,11 @@ export default function TeacherDashboard() {
     if (level === "low") return "bg-green-500";
     if (level === "moderate") return "bg-yellow-500";
     return "bg-red-500";
+  };
+
+  const getRiskText = (level?: string) => {
+    if (!level) return "Calculating...";
+    return level.charAt(0).toUpperCase() + level.slice(1);
   };
 
   return (
@@ -165,7 +180,13 @@ export default function TeacherDashboard() {
                             Attendance: {student.attendanceRate.toFixed(0)}%
                           </div>
                         </div>
-                        <Button variant="outline" size="sm">View Details</Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setSelectedStudentId(student._id)}
+                        >
+                          View Details
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -179,6 +200,193 @@ export default function TeacherDashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* Student Detail Dialog */}
+      <Dialog open={!!selectedStudentId} onOpenChange={(open) => !open && setSelectedStudentId(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          {selectedStudent && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-2xl">{selectedStudent.fullName}</DialogTitle>
+                <DialogDescription>
+                  {selectedStudent.studentId} • Grade {selectedStudent.grade} {selectedStudent.section && `• Section ${selectedStudent.section}`}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6 mt-4">
+                {/* Risk Assessment Section */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5" />
+                      Risk Assessment
+                    </h3>
+                    <Badge className={`${getRiskColor(selectedStudentRisk?.riskLevel)} text-white`}>
+                      {getRiskText(selectedStudentRisk?.riskLevel)}
+                    </Badge>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Risk Score</span>
+                      <span className="font-medium">{selectedStudentRisk?.riskScore?.toFixed(1) || "0"}%</span>
+                    </div>
+                    <Progress value={selectedStudentRisk?.riskScore || 0} className="h-2" />
+                  </div>
+
+                  {selectedStudentRisk?.trendDirection && (
+                    <div className="flex items-center gap-2 text-sm">
+                      {selectedStudentRisk.trendDirection === "improving" ? (
+                        <>
+                          <TrendingDown className="w-4 h-4 text-green-500" />
+                          <span className="text-green-600 dark:text-green-400">Improving</span>
+                        </>
+                      ) : selectedStudentRisk.trendDirection === "declining" ? (
+                        <>
+                          <TrendingUp className="w-4 h-4 text-red-500" />
+                          <span className="text-red-600 dark:text-red-400">Declining</span>
+                        </>
+                      ) : (
+                        <span className="text-muted-foreground">Stable</span>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedStudentRisk?.recommendations && selectedStudentRisk.recommendations.length > 0 && (
+                    <div className="mt-4 p-4 bg-muted rounded-lg">
+                      <h4 className="font-medium mb-2">Recommendations:</h4>
+                      <ul className="space-y-1">
+                        {selectedStudentRisk.recommendations.map((rec, idx) => (
+                          <li key={idx} className="text-sm flex items-start gap-2">
+                            <span className="text-primary mt-1">•</span>
+                            <span>{rec}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                {/* Academic Performance */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Academic Performance
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Current GPA</div>
+                      <div className="text-2xl font-bold">{selectedStudent.currentGPA.toFixed(2)}</div>
+                      <Progress value={(selectedStudent.currentGPA / 4.0) * 100} className="mt-2 h-1" />
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Test Score Average</div>
+                      <div className="text-2xl font-bold">{selectedStudent.testScoreAverage}%</div>
+                      <Progress value={selectedStudent.testScoreAverage} className="mt-2 h-1" />
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Assignment Completion</div>
+                      <div className="text-2xl font-bold">{selectedStudent.assignmentCompletionRate}%</div>
+                      <Progress value={selectedStudent.assignmentCompletionRate} className="mt-2 h-1" />
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Class Participation</div>
+                      <div className="text-2xl font-bold">{selectedStudent.classParticipationScore}%</div>
+                      <Progress value={selectedStudent.classParticipationScore} className="mt-2 h-1" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Attendance & Engagement */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Calendar className="w-5 h-5" />
+                    Attendance & Engagement
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Attendance Rate</div>
+                      <div className="text-2xl font-bold">{selectedStudent.attendanceRate.toFixed(0)}%</div>
+                      <Progress value={selectedStudent.attendanceRate} className="mt-2 h-1" />
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Total Absences</div>
+                      <div className="text-2xl font-bold">{selectedStudent.totalAbsences}</div>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Tardiness Count</div>
+                      <div className="text-2xl font-bold">{selectedStudent.tardinessCount}</div>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Login Frequency</div>
+                      <div className="text-2xl font-bold">{selectedStudent.loginFrequency}/week</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Gamification Stats */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    <Trophy className="w-5 h-5" />
+                    Gamification Progress
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Level</div>
+                      <div className="text-2xl font-bold">Level {selectedStudent.level}</div>
+                      <div className="text-xs text-muted-foreground mt-1">{selectedStudent.xp} XP</div>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Flame className="w-4 h-4" />
+                        Current Streak
+                      </div>
+                      <div className="text-2xl font-bold">{selectedStudent.currentStreak} days</div>
+                      <div className="text-xs text-muted-foreground mt-1">Longest: {selectedStudent.longestStreak} days</div>
+                    </div>
+                    <div className="p-3 border rounded-lg col-span-2">
+                      <div className="text-sm text-muted-foreground flex items-center gap-1">
+                        <Award className="w-4 h-4" />
+                        Badges Earned
+                      </div>
+                      <div className="text-2xl font-bold mb-2">{selectedStudent.badges.length}</div>
+                      {selectedStudent.badges.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedStudent.badges.map((badge, idx) => (
+                            <Badge key={idx} variant="secondary">{badge}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Financial Status */}
+                <div className="space-y-3">
+                  <h3 className="text-lg font-semibold">Financial Information</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Fee Payment Status</div>
+                      <Badge 
+                        variant={selectedStudent.feePaymentStatus === "current" ? "default" : "destructive"}
+                        className="mt-2"
+                      >
+                        {selectedStudent.feePaymentStatus}
+                      </Badge>
+                    </div>
+                    <div className="p-3 border rounded-lg">
+                      <div className="text-sm text-muted-foreground">Scholarship</div>
+                      <div className="text-lg font-medium mt-1">
+                        {selectedStudent.hasScholarship ? "Yes" : "No"}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
