@@ -25,7 +25,7 @@ export default function TeacherSetup() {
   });
   const [currentSubject, setCurrentSubject] = useState("");
 
-  // Check for ID-based login session
+  // Check for ID-based login session - redirect immediately if profile exists
   useEffect(() => {
     const sessionData = sessionStorage.getItem("edutrack_user");
     if (sessionData) {
@@ -35,17 +35,12 @@ export default function TeacherSetup() {
           // User already has a profile from ID-based login
           toast.info("You already have a teacher profile");
           navigate("/teacher/dashboard");
-          return;
         }
       } catch (error) {
         console.error("Error parsing session data:", error);
       }
-    }
-  }, [navigate]);
-
-  // Redirect if teacher profile already exists (for email OTP users)
-  useEffect(() => {
-    if (existingTeacher) {
+    } else if (existingTeacher) {
+      // Redirect if teacher profile already exists (for email OTP users)
       toast.info("You already have a teacher profile");
       navigate("/teacher/dashboard");
     }
@@ -95,8 +90,28 @@ export default function TeacherSetup() {
     }
   };
 
-  // Show loading while checking for existing profile
-  if (existingTeacher === undefined) {
+  // Check session storage first for ID-based login
+  const sessionData = sessionStorage.getItem("edutrack_user");
+  const hasIdBasedProfile = sessionData ? (() => {
+    try {
+      const userData = JSON.parse(sessionData);
+      return userData.role === "teacher" && userData.profileId;
+    } catch {
+      return false;
+    }
+  })() : false;
+
+  // Show loading while checking for existing profile (only for email OTP users)
+  if (!hasIdBasedProfile && existingTeacher === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  // If ID-based profile exists, don't render the form (redirect will happen)
+  if (hasIdBasedProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
