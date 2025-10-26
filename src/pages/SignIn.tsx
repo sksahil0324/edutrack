@@ -18,6 +18,8 @@ import { ArrowRight, GraduationCap, Loader2, Mail, Users } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { motion } from "framer-motion";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
 
 function SignIn() {
   const { isLoading: authLoading, isAuthenticated, signIn, user } = useAuth();
@@ -28,17 +30,26 @@ function SignIn() {
   const [error, setError] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<"student" | "teacher" | null>(null);
 
+  // Query for existing profiles
+  const existingStudent = useQuery(api.students.getCurrentStudent);
+  const existingTeacher = useQuery(api.teachers.getCurrentTeacher);
+
   useEffect(() => {
     if (!authLoading && isAuthenticated && user && selectedRole) {
-      // Redirect to setup pages instead of dashboards
-      // The setup pages will handle redirecting to dashboard if profile exists
+      // Check if user already has a profile for the selected role
       if (selectedRole === "student") {
-        navigate("/student/setup");
+        if (existingStudent !== undefined) {
+          // If profile exists, go to dashboard; otherwise go to setup
+          navigate(existingStudent ? "/student/dashboard" : "/student/setup");
+        }
       } else if (selectedRole === "teacher") {
-        navigate("/teacher/setup");
+        if (existingTeacher !== undefined) {
+          // If profile exists, go to dashboard; otherwise go to setup
+          navigate(existingTeacher ? "/teacher/dashboard" : "/teacher/setup");
+        }
       }
     }
-  }, [authLoading, isAuthenticated, user, navigate, selectedRole]);
+  }, [authLoading, isAuthenticated, user, navigate, selectedRole, existingStudent, existingTeacher]);
 
   const handleRoleSelect = (role: "student" | "teacher") => {
     setSelectedRole(role);
