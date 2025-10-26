@@ -5,7 +5,7 @@ import { Award, BarChart3, Bell, BookOpen, Loader2, TrendingUp, Users } from "lu
 import { useNavigate } from "react-router";
 
 export default function Landing() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -64,7 +64,18 @@ export default function Landing() {
             {isAuthenticated ? (
               <Button
                 size="lg"
-                onClick={() => navigate("/sign-in")}
+                onClick={() => {
+                  // Navigate based on user role
+                  if (user?.role === "student") {
+                    navigate("/student/dashboard");
+                  } else if (user?.role === "teacher") {
+                    navigate("/teacher/dashboard");
+                  } else if (user?.role === "admin") {
+                    navigate("/admin-dashboard");
+                  } else {
+                    navigate("/role-selection");
+                  }
+                }}
                 className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
                 Go to Dashboard
