@@ -420,7 +420,7 @@ export default function AdminDashboard() {
                                 <div className="text-xs text-muted-foreground">Section {student.section || 'N/A'}</div>
                               </div>
                               <div>
-                                <div className="text-sm font-semibold">GPA: {student.currentGPA.toFixed(2)}</div>
+                                <div className="text-sm font-semibold">CGPA: {student.currentCGPA.toFixed(2)}</div>
                                 <div className="text-xs text-muted-foreground">Attendance: {student.attendanceRate.toFixed(0)}%</div>
                               </div>
                               <div>
@@ -463,8 +463,8 @@ export default function AdminDashboard() {
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                                       <div>
                                         <div className="text-xs text-muted-foreground mb-1">CGPA</div>
-                                        <div className="text-lg font-bold">{student.currentGPA.toFixed(2)}</div>
-                                        <Progress value={(student.currentGPA / 4.0) * 100} className="h-1 mt-1" />
+                                        <div className="text-lg font-bold">{student.currentCGPA.toFixed(2)}</div>
+                                        <Progress value={(student.currentCGPA / 10.0) * 100} className="h-1 mt-1" />
                                       </div>
                                       <div>
                                         <div className="text-xs text-muted-foreground mb-1">Attendance</div>

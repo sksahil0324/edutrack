@@ -55,7 +55,7 @@ export const create = mutation({
       studentId: args.studentId,
       grade: args.grade,
       section: args.section,
-      currentGPA: 3.0,
+      currentCGPA: 3.0,
       assignmentCompletionRate: 80,
       testScoreAverage: 75,
       attendanceRate: 90,
@@ -79,7 +79,7 @@ export const create = mutation({
 export const updateMetrics = mutation({
   args: {
     studentId: v.id("students"),
-    currentGPA: v.optional(v.number()),
+    currentCGPA: v.optional(v.number()),
     assignmentCompletionRate: v.optional(v.number()),
     testScoreAverage: v.optional(v.number()),
     attendanceRate: v.optional(v.number()),

@@ -205,7 +205,7 @@ export default function TeacherDashboard() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="text-sm font-medium">GPA: {student.currentGPA.toFixed(2)}</div>
+                          <div className="text-sm font-medium">CGPA: {student.currentCGPA.toFixed(2)}</div>
                           <div className="text-xs text-muted-foreground">
                             Attendance: {student.attendanceRate.toFixed(0)}%
                           </div>
@@ -309,9 +309,9 @@ export default function TeacherDashboard() {
                   </h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Current GPA</div>
-                      <div className="text-2xl font-bold">{selectedStudent.currentGPA.toFixed(2)}</div>
-                      <Progress value={(selectedStudent.currentGPA / 4.0) * 100} className="mt-2 h-1" />
+                      <div className="text-sm text-muted-foreground">Current CGPA</div>
+                      <div className="text-2xl font-bold">{selectedStudent.currentCGPA.toFixed(2)}</div>
+                      <Progress value={(selectedStudent.currentCGPA / 10.0) * 100} className="mt-2 h-1" />
                     </div>
                     <div className="p-3 border rounded-lg">
                       <div className="text-sm text-muted-foreground">Test Score Average</div>

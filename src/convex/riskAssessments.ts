@@ -65,7 +65,7 @@ export const calculateRisk = mutation({
       .first();
     
     // Calculate risk factors (0-100, higher = more risk)
-    const academicRisk = 100 - ((student.currentGPA / 4.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4);
+    const academicRisk = 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4);
     const attendanceRisk = 100 - student.attendanceRate;
     const engagementRisk = 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2);
     const financialRisk = student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20;

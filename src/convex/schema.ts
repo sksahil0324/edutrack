@@ -52,7 +52,7 @@ const schema = defineSchema(
       section: v.optional(v.string()),
       
       // Academic metrics
-      currentGPA: v.number(),
+      currentCGPA: v.number(), // Cumulative Grade Point Average
       assignmentCompletionRate: v.number(), // 0-100
       testScoreAverage: v.number(), // 0-100
       

@@ -171,12 +171,12 @@ export default function StudentDashboard() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium flex items-center gap-2">
                   <BookOpen className="w-4 h-4" />
-                  GPA
+                  CGPA
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{student.currentGPA.toFixed(2)}</div>
-                <Progress value={(student.currentGPA / 4.0) * 100} className="mt-2 h-1" />
+                <div className="text-2xl font-bold">{student.currentCGPA.toFixed(2)}</div>
+                <Progress value={(student.currentCGPA / 10.0) * 100} className="mt-2 h-1" />
               </CardContent>
             </Card>
           </motion.div>
