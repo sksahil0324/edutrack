@@ -41,7 +41,7 @@ function Auth({ redirectAfterAuth }: AuthProps = {}) {
       } else if (user.role === "admin") {
         navigate("/admin-dashboard");
       } else {
-        // No role yet, go to role selection
+        // No role yet, go to role selection to create profile
         const redirect = redirectAfterAuth || "/role-selection";
         navigate(redirect);
       }

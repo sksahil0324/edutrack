@@ -64,7 +64,7 @@ export default function Landing() {
             {isAuthenticated ? (
               <Button
                 size="lg"
-                onClick={() => navigate("/sign-in")}
+                onClick={() => navigate("/role-selection")}
                 className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
                 Go to Dashboard
@@ -73,7 +73,7 @@ export default function Landing() {
               <>
                 <Button
                   size="lg"
-                  onClick={() => navigate("/role-selection")}
+                  onClick={() => navigate("/auth")}
                   className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 >
                   Get Started

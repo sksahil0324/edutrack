@@ -39,13 +39,13 @@ function SignIn() {
       // Check if user already has a profile for the selected role
       if (selectedRole === "student") {
         if (existingStudent !== undefined) {
-          // If profile exists, go to dashboard; otherwise go to setup
-          navigate(existingStudent ? "/student/dashboard" : "/student/setup");
+          // If profile exists, go to dashboard; otherwise go to role selection
+          navigate(existingStudent ? "/student/dashboard" : "/role-selection");
         }
       } else if (selectedRole === "teacher") {
         if (existingTeacher !== undefined) {
-          // If profile exists, go to dashboard; otherwise go to setup
-          navigate(existingTeacher ? "/teacher/dashboard" : "/teacher/setup");
+          // If profile exists, go to dashboard; otherwise go to role selection
+          navigate(existingTeacher ? "/teacher/dashboard" : "/role-selection");
         }
       }
     }
