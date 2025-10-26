@@ -49,7 +49,7 @@ function SignIn() {
           profile: result.profile,
         }));
         
-        // Navigate to dashboard
+        // Always navigate to dashboard since profile exists
         navigate(`/${result.role}/dashboard`);
       }
     } catch (error) {
