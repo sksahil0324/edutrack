@@ -269,7 +269,7 @@ export default function TeacherDashboard() {
                       <div className="flex-1">
                         <h4 className="font-medium">{student.fullName}</h4>
                         <p className="text-sm text-muted-foreground">
-                          {student.studentId} • {student.grade}
+                          {student.studentId} • Year {student.grade}
                         </p>
                       </div>
                       <div className="flex items-center gap-4">
@@ -319,7 +319,7 @@ export default function TeacherDashboard() {
                   <div>
                     <DialogTitle className="text-2xl">{selectedStudent.fullName}</DialogTitle>
                     <DialogDescription>
-                      {selectedStudent.studentId} • Grade {selectedStudent.grade} {selectedStudent.section && `• Section ${selectedStudent.section}`}
+                      {selectedStudent.studentId} • Year {selectedStudent.grade} {selectedStudent.section && `• Section ${selectedStudent.section}`}
                     </DialogDescription>
                   </div>
                   {!isEditMode ? (

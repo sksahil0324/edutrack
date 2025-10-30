@@ -416,7 +416,7 @@ export default function AdminDashboard() {
                                 <div className="text-xs text-muted-foreground">{student.studentId}</div>
                               </div>
                               <div>
-                                <div className="text-sm">Grade {student.grade}</div>
+                                <div className="text-sm">Year {student.grade}</div>
                                 <div className="text-xs text-muted-foreground">Section {student.section || 'N/A'}</div>
                               </div>
                               <div>
