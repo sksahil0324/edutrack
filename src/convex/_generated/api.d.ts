@@ -17,6 +17,7 @@ import type * as admin from "../admin.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as auth from "../auth.js";
 import type * as challenges from "../challenges.js";
+import type * as fixStudentGrades from "../fixStudentGrades.js";
 import type * as http from "../http.js";
 import type * as idAuth from "../idAuth.js";
 import type * as initData from "../initData.js";
@@ -42,6 +43,7 @@ declare const fullApi: ApiFromModules<{
   "auth/emailOtp": typeof auth_emailOtp;
   auth: typeof auth;
   challenges: typeof challenges;
+  fixStudentGrades: typeof fixStudentGrades;
   http: typeof http;
   idAuth: typeof idAuth;
   initData: typeof initData;
