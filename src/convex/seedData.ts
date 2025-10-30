@@ -89,7 +89,7 @@ export const seedDatabase = mutation({
       "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
     ];
 
-    const grades = ["1", "2", "3", "4"];
+    const grades = ["1", "2", "3"];
     const sections = ["A", "B", "C", "D"];
 
     const studentIds: Array<string> = [];
