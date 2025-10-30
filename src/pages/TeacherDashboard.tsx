@@ -63,6 +63,7 @@ export default function TeacherDashboard() {
   const selectedStudent = students?.find(s => s._id === selectedStudentId);
 
   const updateStudentMetrics = useMutation(api.students.updateMetrics);
+  const calculateRisk = useMutation(api.riskAssessments.calculateRisk);
 
   // Initialize edit form when student is selected
   useEffect(() => {
@@ -125,11 +126,18 @@ export default function TeacherDashboard() {
     if (!selectedStudentId) return;
     
     try {
+      // Update student metrics
       await updateStudentMetrics({
         studentId: selectedStudentId,
         ...editFormData,
       });
-      toast.success("Student details updated successfully");
+      
+      // Recalculate risk score based on new metrics
+      await calculateRisk({
+        studentId: selectedStudentId,
+      });
+      
+      toast.success("Student details and risk score updated successfully");
       setIsEditMode(false);
     } catch (error) {
       toast.error("Failed to update student details");
