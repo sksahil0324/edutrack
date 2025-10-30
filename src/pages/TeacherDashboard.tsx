@@ -4,14 +4,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, Search, TrendingDown, TrendingUp, Trophy, Users, X } from "lucide-react";
+import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, Search, TrendingDown, TrendingUp, Trophy, Users, X, Edit } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
+import { toast } from "sonner";
 
 export default function TeacherDashboard() {
   const { isLoading: authLoading, signOut } = useAuth();
@@ -19,6 +21,17 @@ export default function TeacherDashboard() {
   const [teacherIdFromSession, setTeacherIdFromSession] = useState<Id<"teachers"> | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<Id<"students"> | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    currentCGPA: 0,
+    assignmentCompletionRate: 0,
+    testScoreAverage: 0,
+    attendanceRate: 0,
+    totalAbsences: 0,
+    tardinessCount: 0,
+    loginFrequency: 0,
+    classParticipationScore: 0,
+  });
   
   // Check sessionStorage for ID-based login
   useEffect(() => {
@@ -42,13 +55,30 @@ export default function TeacherDashboard() {
   
   const students = useQuery(api.students.getAll);
   
-  // Fetch selected student's risk assessment
   const selectedStudentRisk = useQuery(
     api.riskAssessments.getLatestForStudent,
     selectedStudentId ? { studentId: selectedStudentId } : "skip"
   );
   
   const selectedStudent = students?.find(s => s._id === selectedStudentId);
+
+  const updateStudentMetrics = useMutation(api.students.updateMetrics);
+
+  // Initialize edit form when student is selected
+  useEffect(() => {
+    if (selectedStudent && isEditMode) {
+      setEditFormData({
+        currentCGPA: selectedStudent.currentCGPA,
+        assignmentCompletionRate: selectedStudent.assignmentCompletionRate,
+        testScoreAverage: selectedStudent.testScoreAverage,
+        attendanceRate: selectedStudent.attendanceRate,
+        totalAbsences: selectedStudent.totalAbsences,
+        tardinessCount: selectedStudent.tardinessCount,
+        loginFrequency: selectedStudent.loginFrequency,
+        classParticipationScore: selectedStudent.classParticipationScore,
+      });
+    }
+  }, [selectedStudent, isEditMode]);
 
   // Filter students based on search query
   const filteredStudents = students?.filter((student) => {
@@ -81,6 +111,37 @@ export default function TeacherDashboard() {
     } catch (error) {
       console.error("Sign out error:", error);
     }
+  };
+
+  const handleEditStudent = () => {
+    setIsEditMode(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedStudentId) return;
+    
+    try {
+      await updateStudentMetrics({
+        studentId: selectedStudentId,
+        ...editFormData,
+      });
+      toast.success("Student details updated successfully");
+      setIsEditMode(false);
+    } catch (error) {
+      toast.error("Failed to update student details");
+      console.error("Update error:", error);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setEditFormData(prev => ({
+      ...prev,
+      [field]: parseFloat(value) || 0,
+    }));
   };
 
   const getRiskColor = (level?: string) => {
@@ -236,15 +297,39 @@ export default function TeacherDashboard() {
       </div>
 
       {/* Student Detail Dialog */}
-      <Dialog open={!!selectedStudentId} onOpenChange={(open) => !open && setSelectedStudentId(null)}>
+      <Dialog open={!!selectedStudentId} onOpenChange={(open) => {
+        if (!open) {
+          setSelectedStudentId(null);
+          setIsEditMode(false);
+        }
+      }}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           {selectedStudent && (
             <>
               <DialogHeader>
-                <DialogTitle className="text-2xl">{selectedStudent.fullName}</DialogTitle>
-                <DialogDescription>
-                  {selectedStudent.studentId} • Grade {selectedStudent.grade} {selectedStudent.section && `• Section ${selectedStudent.section}`}
-                </DialogDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <DialogTitle className="text-2xl">{selectedStudent.fullName}</DialogTitle>
+                    <DialogDescription>
+                      {selectedStudent.studentId} • Grade {selectedStudent.grade} {selectedStudent.section && `• Section ${selectedStudent.section}`}
+                    </DialogDescription>
+                  </div>
+                  {!isEditMode ? (
+                    <Button variant="outline" size="sm" onClick={handleEditStudent}>
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Details
+                    </Button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleSaveEdit}>
+                        Save Changes
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </DialogHeader>
 
               <div className="space-y-6 mt-4">
@@ -307,28 +392,78 @@ export default function TeacherDashboard() {
                     <BookOpen className="w-5 h-5" />
                     Academic Performance
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Current CGPA</div>
-                      <div className="text-2xl font-bold">{selectedStudent.currentCGPA.toFixed(2)}</div>
-                      <Progress value={(selectedStudent.currentCGPA / 10.0) * 100} className="mt-2 h-1" />
+                  {isEditMode ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="cgpa">Current CGPA (0-10)</Label>
+                        <Input
+                          id="cgpa"
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
+                          value={editFormData.currentCGPA}
+                          onChange={(e) => handleInputChange("currentCGPA", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="testScore">Test Score Average (%)</Label>
+                        <Input
+                          id="testScore"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={editFormData.testScoreAverage}
+                          onChange={(e) => handleInputChange("testScoreAverage", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="assignment">Assignment Completion (%)</Label>
+                        <Input
+                          id="assignment"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={editFormData.assignmentCompletionRate}
+                          onChange={(e) => handleInputChange("assignmentCompletionRate", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="participation">Class Participation (%)</Label>
+                        <Input
+                          id="participation"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={editFormData.classParticipationScore}
+                          onChange={(e) => handleInputChange("classParticipationScore", e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Test Score Average</div>
-                      <div className="text-2xl font-bold">{selectedStudent.testScoreAverage}%</div>
-                      <Progress value={selectedStudent.testScoreAverage} className="mt-2 h-1" />
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Current CGPA</div>
+                        <div className="text-2xl font-bold">{selectedStudent.currentCGPA.toFixed(2)}</div>
+                        <Progress value={(selectedStudent.currentCGPA / 10.0) * 100} className="mt-2 h-1" />
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Test Score Average</div>
+                        <div className="text-2xl font-bold">{selectedStudent.testScoreAverage}%</div>
+                        <Progress value={selectedStudent.testScoreAverage} className="mt-2 h-1" />
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Assignment Completion</div>
+                        <div className="text-2xl font-bold">{selectedStudent.assignmentCompletionRate}%</div>
+                        <Progress value={selectedStudent.assignmentCompletionRate} className="mt-2 h-1" />
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Class Participation</div>
+                        <div className="text-2xl font-bold">{selectedStudent.classParticipationScore}%</div>
+                        <Progress value={selectedStudent.classParticipationScore} className="mt-2 h-1" />
+                      </div>
                     </div>
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Assignment Completion</div>
-                      <div className="text-2xl font-bold">{selectedStudent.assignmentCompletionRate}%</div>
-                      <Progress value={selectedStudent.assignmentCompletionRate} className="mt-2 h-1" />
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Class Participation</div>
-                      <div className="text-2xl font-bold">{selectedStudent.classParticipationScore}%</div>
-                      <Progress value={selectedStudent.classParticipationScore} className="mt-2 h-1" />
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Attendance & Engagement */}
@@ -337,25 +472,71 @@ export default function TeacherDashboard() {
                     <Calendar className="w-5 h-5" />
                     Attendance & Engagement
                   </h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Attendance Rate</div>
-                      <div className="text-2xl font-bold">{selectedStudent.attendanceRate.toFixed(0)}%</div>
-                      <Progress value={selectedStudent.attendanceRate} className="mt-2 h-1" />
+                  {isEditMode ? (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="attendance">Attendance Rate (%)</Label>
+                        <Input
+                          id="attendance"
+                          type="number"
+                          min="0"
+                          max="100"
+                          value={editFormData.attendanceRate}
+                          onChange={(e) => handleInputChange("attendanceRate", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="absences">Total Absences</Label>
+                        <Input
+                          id="absences"
+                          type="number"
+                          min="0"
+                          value={editFormData.totalAbsences}
+                          onChange={(e) => handleInputChange("totalAbsences", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="tardiness">Tardiness Count</Label>
+                        <Input
+                          id="tardiness"
+                          type="number"
+                          min="0"
+                          value={editFormData.tardinessCount}
+                          onChange={(e) => handleInputChange("tardinessCount", e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="loginFreq">Login Frequency (per week)</Label>
+                        <Input
+                          id="loginFreq"
+                          type="number"
+                          min="0"
+                          value={editFormData.loginFrequency}
+                          onChange={(e) => handleInputChange("loginFrequency", e.target.value)}
+                        />
+                      </div>
                     </div>
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Total Absences</div>
-                      <div className="text-2xl font-bold">{selectedStudent.totalAbsences}</div>
+                  ) : (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Attendance Rate</div>
+                        <div className="text-2xl font-bold">{selectedStudent.attendanceRate.toFixed(0)}%</div>
+                        <Progress value={selectedStudent.attendanceRate} className="mt-2 h-1" />
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Total Absences</div>
+                        <div className="text-2xl font-bold">{selectedStudent.totalAbsences}</div>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Tardiness Count</div>
+                        <div className="text-2xl font-bold">{selectedStudent.tardinessCount}</div>
+                      </div>
+                      <div className="p-3 border rounded-lg">
+                        <div className="text-sm text-muted-foreground">Login Frequency</div>
+                        <div className="text-2xl font-bold">{selectedStudent.loginFrequency}/week</div>
+                      </div>
                     </div>
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Tardiness Count</div>
-                      <div className="text-2xl font-bold">{selectedStudent.tardinessCount}</div>
-                    </div>
-                    <div className="p-3 border rounded-lg">
-                      <div className="text-sm text-muted-foreground">Login Frequency</div>
-                      <div className="text-2xl font-bold">{selectedStudent.loginFrequency}/week</div>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 {/* Gamification Stats */}
