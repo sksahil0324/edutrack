@@ -313,6 +313,187 @@ export const calculateRiskHolistic = mutation({
   },
 });
 
+// Run all three algorithms and return comparison
+export const calculateAllAlgorithms = mutation({
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) throw new Error("Student not found");
+    
+    // Get previous assessment for trend calculation
+    const previous = await ctx.db
+      .query("riskAssessments")
+      .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+      .order("desc")
+      .first();
+    
+    // Helper function to calculate each algorithm's metrics
+    const calculateOriginal = () => {
+      const academicRisk = 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4);
+      const attendanceRisk = 100 - student.attendanceRate;
+      const engagementRisk = 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2);
+      const financialRisk = student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20;
+      const socialRisk = 100 - student.classParticipationScore;
+      
+      const riskScore = (
+        academicRisk * 0.35 +
+        attendanceRisk * 0.25 +
+        engagementRisk * 0.20 +
+        financialRisk * 0.10 +
+        socialRisk * 0.10
+      );
+      
+      let riskLevel: "low" | "moderate" | "high";
+      if (riskScore < 30) riskLevel = "low";
+      else if (riskScore < 60) riskLevel = "moderate";
+      else riskLevel = "high";
+      
+      return { riskScore, riskLevel, algorithm: "Original (Rule-Based)" };
+    };
+    
+    const calculateML = () => {
+      const cgpaScore = student.currentCGPA / 10.0;
+      const academicRisk = cgpaScore < 0.5 
+        ? 90 + (0.5 - cgpaScore) * 20
+        : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
+      
+      const attendanceRisk = student.attendanceRate < 75 
+        ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
+        : 100 - student.attendanceRate;
+      
+      const engagementRisk = 100 - (
+        Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+        student.classParticipationScore * 0.4 + 
+        Math.sqrt(student.challengeCompletionRate) * 3
+      );
+      
+      const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
+                           student.feePaymentStatus === "delayed" ? 55 : 15;
+      
+      const socialRisk = student.classParticipationScore < 50 
+        ? 100 - student.classParticipationScore + 10
+        : 100 - student.classParticipationScore;
+      
+      const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
+      const weights = {
+        academic: maxRisk === academicRisk ? 0.40 : 0.30,
+        attendance: maxRisk === attendanceRisk ? 0.35 : 0.25,
+        engagement: maxRisk === engagementRisk ? 0.25 : 0.20,
+        financial: 0.10,
+        social: 0.10,
+      };
+      
+      const riskScore = (
+        academicRisk * weights.academic +
+        attendanceRisk * weights.attendance +
+        engagementRisk * weights.engagement +
+        financialRisk * weights.financial +
+        socialRisk * weights.social
+      );
+      
+      let riskLevel: "low" | "moderate" | "high";
+      if (riskScore < 35) riskLevel = "low";
+      else if (riskScore < 65) riskLevel = "moderate";
+      else riskLevel = "high";
+      
+      return { riskScore, riskLevel, algorithm: "ML-Inspired" };
+    };
+    
+    const calculateHolistic = () => {
+      const academicRisk = 100 - (
+        (student.currentCGPA / 10.0) * 33.33 + 
+        student.assignmentCompletionRate * 0.33 + 
+        student.testScoreAverage * 0.33
+      );
+      
+      const attendanceRisk = 100 - (
+        student.attendanceRate * 0.7 + 
+        (100 - student.totalAbsences * 2) * 0.2 + 
+        (100 - student.tardinessCount * 5) * 0.1
+      );
+      
+      const engagementRisk = 100 - (
+        (student.loginFrequency / 7) * 25 + 
+        student.classParticipationScore * 0.5 + 
+        student.challengeCompletionRate * 0.25
+      );
+      
+      const financialRisk = student.feePaymentStatus === "overdue" ? 75 : 
+                           student.feePaymentStatus === "delayed" ? 45 : 
+                           student.hasScholarship ? 10 : 20;
+      
+      const socialRisk = 100 - (
+        student.classParticipationScore * 0.6 + 
+        (student.currentStreak / student.longestStreak || 0) * 40
+      );
+      
+      const compoundMultiplier = 1 + (
+        (academicRisk > 60 && attendanceRisk > 60 ? 0.15 : 0) +
+        (academicRisk > 60 && engagementRisk > 60 ? 0.15 : 0) +
+        (attendanceRisk > 60 && engagementRisk > 60 ? 0.10 : 0) +
+        (financialRisk > 60 && academicRisk > 50 ? 0.10 : 0)
+      );
+      
+      const baseRiskScore = (
+        academicRisk * 0.20 +
+        attendanceRisk * 0.20 +
+        engagementRisk * 0.20 +
+        financialRisk * 0.20 +
+        socialRisk * 0.20
+      );
+      
+      const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
+      
+      let riskLevel: "low" | "moderate" | "high";
+      if (riskScore < 33) riskLevel = "low";
+      else if (riskScore < 66) riskLevel = "moderate";
+      else riskLevel = "high";
+      
+      return { riskScore, riskLevel, algorithm: "Holistic-Balanced", compoundMultiplier };
+    };
+    
+    const original = calculateOriginal();
+    const ml = calculateML();
+    const holistic = calculateHolistic();
+    
+    // Calculate average and consensus
+    const avgScore = (original.riskScore + ml.riskScore + holistic.riskScore) / 3;
+    const scores = [original.riskScore, ml.riskScore, holistic.riskScore];
+    const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 3;
+    const agreement = variance < 100 ? "high" : variance < 400 ? "moderate" : "low";
+    
+    return {
+      original,
+      ml,
+      holistic,
+      comparison: {
+        averageScore: avgScore,
+        variance,
+        agreement,
+        recommendation: ml.riskScore > 60 ? "ML-Inspired flags urgent intervention needed" :
+                       holistic.riskScore > 60 ? "Holistic suggests comprehensive support" :
+                       "All algorithms indicate manageable risk"
+      }
+    };
+  },
+});
+
+// Get comparison data for a student
+export const getAlgorithmComparison = query({
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) return null;
+    
+    // This would typically be cached or stored, but for now we'll calculate on demand
+    // In production, you'd want to store comparison results
+    return {
+      studentId: args.studentId,
+      note: "Run calculateAllAlgorithms mutation to generate comparison"
+    };
+  },
+});
+
 // Get all high-risk students
 export const getHighRiskStudents = query({
   args: {},

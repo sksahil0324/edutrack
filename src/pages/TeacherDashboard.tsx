@@ -9,11 +9,12 @@ import { api } from "@/convex/_generated/api";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "convex/react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, Search, TrendingDown, TrendingUp, Trophy, Users, X, Edit } from "lucide-react";
+import { AlertTriangle, Award, BookOpen, Calendar, Flame, Loader2, LogOut, Search, TrendingDown, TrendingUp, Trophy, Users, X, Edit, BarChart3 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect, useState } from "react";
 import type { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
+import { AlgorithmComparison } from "@/components/AlgorithmComparison";
 
 export default function TeacherDashboard() {
   const { isLoading: authLoading, signOut } = useAuth();
@@ -32,6 +33,8 @@ export default function TeacherDashboard() {
     loginFrequency: 0,
     classParticipationScore: 0,
   });
+  const [algorithmComparison, setAlgorithmComparison] = useState<any>(null);
+  const [isLoadingComparison, setIsLoadingComparison] = useState(false);
   
   // Check sessionStorage for ID-based login
   useEffect(() => {
@@ -64,6 +67,7 @@ export default function TeacherDashboard() {
 
   const updateStudentMetrics = useMutation(api.students.updateMetrics);
   const calculateRisk = useMutation(api.riskAssessments.calculateRisk);
+  const calculateAllAlgorithms = useMutation(api.riskAssessments.calculateAllAlgorithms);
 
   // Initialize edit form when student is selected
   useEffect(() => {
@@ -150,6 +154,22 @@ export default function TeacherDashboard() {
       ...prev,
       [field]: parseFloat(value) || 0,
     }));
+  };
+
+  const handleViewAlgorithmComparison = async () => {
+    if (!selectedStudentId) return;
+    
+    setIsLoadingComparison(true);
+    try {
+      const result = await calculateAllAlgorithms({ studentId: selectedStudentId });
+      setAlgorithmComparison(result);
+      toast.success("Algorithm comparison generated");
+    } catch (error) {
+      toast.error("Failed to generate comparison");
+      console.error("Comparison error:", error);
+    } finally {
+      setIsLoadingComparison(false);
+    }
   };
 
   const getRiskColor = (level?: string) => {
@@ -309,9 +329,10 @@ export default function TeacherDashboard() {
         if (!open) {
           setSelectedStudentId(null);
           setIsEditMode(false);
+          setAlgorithmComparison(null);
         }
       }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           {selectedStudent && (
             <>
               <DialogHeader>
@@ -322,25 +343,47 @@ export default function TeacherDashboard() {
                       {selectedStudent.studentId} • Year {selectedStudent.grade} {selectedStudent.section && `• Section ${selectedStudent.section}`}
                     </DialogDescription>
                   </div>
-                  {!isEditMode ? (
-                    <Button variant="outline" size="sm" onClick={handleEditStudent}>
-                      <Edit className="mr-2 h-4 w-4" />
-                      Edit Details
-                    </Button>
-                  ) : (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" onClick={handleCancelEdit}>
-                        Cancel
-                      </Button>
-                      <Button size="sm" onClick={handleSaveEdit}>
-                        Save Changes
-                      </Button>
-                    </div>
-                  )}
+                  <div className="flex gap-2">
+                    {!isEditMode ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleViewAlgorithmComparison}
+                          disabled={isLoadingComparison}
+                        >
+                          {isLoadingComparison ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <BarChart3 className="mr-2 h-4 w-4" />
+                          )}
+                          Compare Algorithms
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleEditStudent}>
+                          <Edit className="mr-2 h-4 w-4" />
+                          Edit Details
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button variant="outline" size="sm" onClick={handleCancelEdit}>
+                          Cancel
+                        </Button>
+                        <Button size="sm" onClick={handleSaveEdit}>
+                          Save Changes
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </DialogHeader>
 
               <div className="space-y-6 mt-4">
+                {/* Algorithm Comparison Section */}
+                {algorithmComparison && (
+                  <AlgorithmComparison data={algorithmComparison} />
+                )}
+
                 {/* Risk Assessment Section */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
