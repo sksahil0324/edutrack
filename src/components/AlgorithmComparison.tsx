@@ -104,9 +104,9 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                 }`}
               >
                 <div className="space-y-2 w-full">
-                  <div className="flex items-center justify-between gap-2 w-full">
-                    <div className="flex items-center gap-1 min-w-0 flex-1">
-                      <h4 className="font-semibold text-xs truncate">
+                  <div className="flex items-start justify-between gap-2 w-full">
+                    <div className="flex items-center gap-1 flex-1">
+                      <h4 className="font-semibold text-xs leading-tight">
                         {algo.data.algorithm}
                       </h4>
                       {algo.highlighted && <TrendingUp className="w-3 h-3 text-primary flex-shrink-0" />}
