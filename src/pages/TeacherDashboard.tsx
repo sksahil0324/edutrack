@@ -294,9 +294,9 @@ export default function TeacherDashboard() {
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                          <div className="text-sm font-medium">CGPA: {student.currentCGPA.toFixed(2)}</div>
+                          <div className="text-sm font-medium">CGPA: {(student.currentCGPA || 0).toFixed(2)}</div>
                           <div className="text-xs text-muted-foreground">
-                            Attendance: {student.attendanceRate.toFixed(0)}%
+                            Attendance: {(student.attendanceRate || 0).toFixed(0)}%
                           </div>
                         </div>
                         <Button 
@@ -495,23 +495,23 @@ export default function TeacherDashboard() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Current CGPA</div>
-                        <div className="text-2xl font-bold">{selectedStudent.currentCGPA.toFixed(2)}</div>
-                        <Progress value={(selectedStudent.currentCGPA / 10.0) * 100} className="mt-2 h-1" />
+                        <div className="text-2xl font-bold">{(selectedStudent.currentCGPA || 0).toFixed(2)}</div>
+                        <Progress value={((selectedStudent.currentCGPA || 0) / 10.0) * 100} className="mt-2 h-1" />
                       </div>
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Test Score Average</div>
-                        <div className="text-2xl font-bold">{selectedStudent.testScoreAverage}%</div>
-                        <Progress value={selectedStudent.testScoreAverage} className="mt-2 h-1" />
+                        <div className="text-2xl font-bold">{selectedStudent.testScoreAverage || 0}%</div>
+                        <Progress value={selectedStudent.testScoreAverage || 0} className="mt-2 h-1" />
                       </div>
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Assignment Completion</div>
-                        <div className="text-2xl font-bold">{selectedStudent.assignmentCompletionRate}%</div>
-                        <Progress value={selectedStudent.assignmentCompletionRate} className="mt-2 h-1" />
+                        <div className="text-2xl font-bold">{selectedStudent.assignmentCompletionRate || 0}%</div>
+                        <Progress value={selectedStudent.assignmentCompletionRate || 0} className="mt-2 h-1" />
                       </div>
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Class Participation</div>
-                        <div className="text-2xl font-bold">{selectedStudent.classParticipationScore}%</div>
-                        <Progress value={selectedStudent.classParticipationScore} className="mt-2 h-1" />
+                        <div className="text-2xl font-bold">{selectedStudent.classParticipationScore || 0}%</div>
+                        <Progress value={selectedStudent.classParticipationScore || 0} className="mt-2 h-1" />
                       </div>
                     </div>
                   )}
@@ -571,20 +571,20 @@ export default function TeacherDashboard() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Attendance Rate</div>
-                        <div className="text-2xl font-bold">{selectedStudent.attendanceRate.toFixed(0)}%</div>
-                        <Progress value={selectedStudent.attendanceRate} className="mt-2 h-1" />
+                        <div className="text-2xl font-bold">{(selectedStudent.attendanceRate || 0).toFixed(0)}%</div>
+                        <Progress value={selectedStudent.attendanceRate || 0} className="mt-2 h-1" />
                       </div>
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Total Absences</div>
-                        <div className="text-2xl font-bold">{selectedStudent.totalAbsences}</div>
+                        <div className="text-2xl font-bold">{selectedStudent.totalAbsences || 0}</div>
                       </div>
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Tardiness Count</div>
-                        <div className="text-2xl font-bold">{selectedStudent.tardinessCount}</div>
+                        <div className="text-2xl font-bold">{selectedStudent.tardinessCount || 0}</div>
                       </div>
                       <div className="p-3 border rounded-lg">
                         <div className="text-sm text-muted-foreground">Login Frequency</div>
-                        <div className="text-2xl font-bold">{selectedStudent.loginFrequency}/week</div>
+                        <div className="text-2xl font-bold">{selectedStudent.loginFrequency || 0}/week</div>
                       </div>
                     </div>
                   )}
