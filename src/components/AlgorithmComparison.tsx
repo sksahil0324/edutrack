@@ -99,20 +99,23 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative p-3 border-2 rounded-lg space-y-3 transition-all hover:shadow-md ${
+                className={`relative p-4 border-2 rounded-lg space-y-3 transition-all hover:shadow-md overflow-hidden ${ 
                   algo.highlighted ? "border-primary bg-primary/5" : getRiskBorderColor(algo.data.riskLevel)
                 }`}
               >
-                <div className="space-y-2">
-                  <div className="flex items-start justify-between gap-2 flex-wrap">
-                    <h4 className="font-semibold text-sm flex items-center gap-1 flex-shrink-0">
-                      {algo.data.algorithm}
-                      {algo.highlighted && <TrendingUp className="w-4 h-4 text-primary" />}
-                    </h4>
-                    <Badge className={`${getRiskColor(algo.data.riskLevel)} flex-shrink-0`}>
+                <div className="space-y-2 w-full">
+                  <div className="flex items-center justify-between gap-2 w-full">
+                    <div className="flex items-center gap-1 min-w-0 flex-1">
+                      <h4 className="font-semibold text-xs truncate">
+                        {algo.data.algorithm}
+                      </h4>
+                      {algo.highlighted && <TrendingUp className="w-3 h-3 text-primary flex-shrink-0" />}
+                    </div>
+                    <Badge className={`${getRiskColor(algo.data.riskLevel)} text-xs px-1.5 py-0.5 flex-shrink-0 whitespace-nowrap`}>
                       {algo.data.riskLevel.toUpperCase()}
                     </Badge>
                   </div>
+
                   {algo.highlighted && (
                     <Badge variant="outline" className="text-xs border-primary text-primary inline-block px-1.5 py-0.5">
                       Recommended
