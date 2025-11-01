@@ -50,7 +50,7 @@ export const create = mutation({
   },
 });
 
-// Calculate risk assessment (AI simulation) - ORIGINAL ALGORITHM
+// Calculate risk assessment - Now uses ML-Inspired algorithm as primary
 export const calculateRisk = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
@@ -64,41 +64,67 @@ export const calculateRisk = mutation({
       .order("desc")
       .first();
     
-    // Calculate risk factors (0-100, higher = more risk)
-    const academicRisk = 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4);
-    const attendanceRisk = 100 - student.attendanceRate;
-    const engagementRisk = 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2);
-    const financialRisk = student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20;
-    const socialRisk = 100 - student.classParticipationScore;
+    // ML-Inspired: Non-linear risk calculation with exponential penalties
+    const cgpaScore = student.currentCGPA / 10.0;
+    const academicRisk = cgpaScore < 0.5 
+      ? 90 + (0.5 - cgpaScore) * 20  // Exponential penalty below 5.0 CGPA
+      : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
     
-    // Weighted average
+    const attendanceRisk = student.attendanceRate < 75 
+      ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5  // Extra penalty below 75%
+      : 100 - student.attendanceRate;
+    
+    const engagementRisk = 100 - (
+      Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+      student.classParticipationScore * 0.4 + 
+      Math.sqrt(student.challengeCompletionRate) * 3
+    );
+    
+    const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
+                         student.feePaymentStatus === "delayed" ? 55 : 15;
+    
+    const socialRisk = student.classParticipationScore < 50 
+      ? 100 - student.classParticipationScore + 10  // Penalty for low participation
+      : 100 - student.classParticipationScore;
+    
+    // Dynamic weighting based on severity
+    const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
+    const weights = {
+      academic: maxRisk === academicRisk ? 0.40 : 0.30,
+      attendance: maxRisk === attendanceRisk ? 0.35 : 0.25,
+      engagement: maxRisk === engagementRisk ? 0.25 : 0.20,
+      financial: 0.10,
+      social: 0.10,
+    };
+    
     const riskScore = (
-      academicRisk * 0.35 +
-      attendanceRisk * 0.25 +
-      engagementRisk * 0.20 +
-      financialRisk * 0.10 +
-      socialRisk * 0.10
+      academicRisk * weights.academic +
+      attendanceRisk * weights.attendance +
+      engagementRisk * weights.engagement +
+      financialRisk * weights.financial +
+      socialRisk * weights.social
     );
     
     // Determine risk level
     let riskLevel: "low" | "moderate" | "high";
-    if (riskScore < 30) riskLevel = "low";
-    else if (riskScore < 60) riskLevel = "moderate";
+    if (riskScore < 35) riskLevel = "low";
+    else if (riskScore < 65) riskLevel = "moderate";
     else riskLevel = "high";
     
     // Generate recommendations
     const recommendations: string[] = [];
-    if (academicRisk > 50) recommendations.push("Schedule tutoring sessions to improve grades");
-    if (attendanceRisk > 40) recommendations.push("Address attendance issues - contact student/parents");
-    if (engagementRisk > 50) recommendations.push("Increase engagement through interactive activities");
-    if (financialRisk > 50) recommendations.push("Discuss financial aid options");
-    if (socialRisk > 60) recommendations.push("Encourage peer interaction and group activities");
+    if (academicRisk > 60) recommendations.push("Urgent: Intensive academic support required");
+    if (academicRisk > 45 && academicRisk <= 60) recommendations.push("Schedule regular tutoring sessions");
+    if (attendanceRisk > 50) recommendations.push("Critical: Address chronic absenteeism immediately");
+    if (engagementRisk > 55) recommendations.push("Implement personalized engagement strategies");
+    if (financialRisk > 50) recommendations.push("Priority: Connect with financial aid office");
+    if (socialRisk > 65) recommendations.push("Refer to counseling for social integration support");
     
     // Trend direction
     let trendDirection = "stable";
     if (previous) {
-      if (riskScore < previous.riskScore - 5) trendDirection = "improving";
-      else if (riskScore > previous.riskScore + 5) trendDirection = "declining";
+      if (riskScore < previous.riskScore - 7) trendDirection = "improving";
+      else if (riskScore > previous.riskScore + 7) trendDirection = "declining";
     }
     
     // Create assessment
