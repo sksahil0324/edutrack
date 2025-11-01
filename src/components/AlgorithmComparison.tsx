@@ -78,8 +78,9 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
+      className="w-full"
     >
-      <Card className="border-2 shadow-lg">
+      <Card className="border-2 shadow-lg overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5">
           <CardTitle className="flex items-center gap-2 text-xl">
             <BarChart3 className="w-6 h-6 text-primary" />
@@ -98,22 +99,22 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`p-5 border-2 rounded-lg space-y-4 transition-all hover:shadow-md ${
+                className={`relative p-5 border-2 rounded-lg space-y-4 transition-all hover:shadow-md ${
                   algo.highlighted ? "border-primary bg-primary/5" : getRiskBorderColor(algo.data.riskLevel)
                 }`}
               >
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="font-semibold text-sm flex items-center gap-1">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <h4 className="font-semibold text-sm flex items-center gap-1 flex-shrink-0">
                       {algo.data.algorithm}
                       {algo.highlighted && <TrendingUp className="w-4 h-4 text-primary" />}
                     </h4>
-                    <Badge className={getRiskColor(algo.data.riskLevel)}>
+                    <Badge className={`${getRiskColor(algo.data.riskLevel)} flex-shrink-0`}>
                       {algo.data.riskLevel.toUpperCase()}
                     </Badge>
                   </div>
                   {algo.highlighted && (
-                    <Badge variant="outline" className="text-xs border-primary text-primary">
+                    <Badge variant="outline" className="text-xs border-primary text-primary inline-block">
                       Recommended
                     </Badge>
                   )}
@@ -133,7 +134,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                 <div className="space-y-1 pt-2 border-t">
                   {algo.features.map((feature, idx) => (
                     <div key={idx} className="flex items-start gap-2 text-xs">
-                      <span className="text-primary mt-0.5">✓</span>
+                      <span className="text-primary mt-0.5 flex-shrink-0">✓</span>
                       <span className="text-muted-foreground">{feature}</span>
                     </div>
                   ))}
