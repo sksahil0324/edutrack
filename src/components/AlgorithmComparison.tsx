@@ -92,7 +92,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Individual Algorithm Results */}
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
             {algorithms.map((algo, index) => (
               <motion.div
                 key={algo.data.algorithm}
