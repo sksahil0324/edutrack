@@ -99,7 +99,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative p-5 border-2 rounded-lg space-y-4 transition-all hover:shadow-md ${
+                className={`relative p-3 border-2 rounded-lg space-y-3 transition-all hover:shadow-md ${
                   algo.highlighted ? "border-primary bg-primary/5" : getRiskBorderColor(algo.data.riskLevel)
                 }`}
               >
