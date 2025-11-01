@@ -24,6 +24,7 @@ import type * as initData from "../initData.js";
 import type * as interventions from "../interventions.js";
 import type * as migrateGPAtoCGPA from "../migrateGPAtoCGPA.js";
 import type * as notifications from "../notifications.js";
+import type * as recalculateRisks from "../recalculateRisks.js";
 import type * as riskAssessments from "../riskAssessments.js";
 import type * as seedData from "../seedData.js";
 import type * as students from "../students.js";
@@ -50,6 +51,7 @@ declare const fullApi: ApiFromModules<{
   interventions: typeof interventions;
   migrateGPAtoCGPA: typeof migrateGPAtoCGPA;
   notifications: typeof notifications;
+  recalculateRisks: typeof recalculateRisks;
   riskAssessments: typeof riskAssessments;
   seedData: typeof seedData;
   students: typeof students;
