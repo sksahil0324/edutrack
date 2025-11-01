@@ -50,7 +50,7 @@ export const create = mutation({
   },
 });
 
-// Calculate risk assessment (AI simulation)
+// Calculate risk assessment (AI simulation) - ORIGINAL ALGORITHM
 export const calculateRisk = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
@@ -118,6 +118,198 @@ export const calculateRisk = mutation({
     });
     
     return { riskLevel, riskScore, trendDirection };
+  },
+});
+
+// ALGORITHM 2: Machine Learning-Inspired with Non-Linear Penalties
+export const calculateRiskML = mutation({
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) throw new Error("Student not found");
+    
+    const previous = await ctx.db
+      .query("riskAssessments")
+      .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+      .order("desc")
+      .first();
+    
+    // Non-linear risk calculation with exponential penalties for critical thresholds
+    const cgpaScore = student.currentCGPA / 10.0;
+    const academicRisk = cgpaScore < 0.5 
+      ? 90 + (0.5 - cgpaScore) * 20  // Exponential penalty below 5.0 CGPA
+      : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
+    
+    const attendanceRisk = student.attendanceRate < 75 
+      ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5  // Extra penalty below 75%
+      : 100 - student.attendanceRate;
+    
+    const engagementRisk = 100 - (
+      Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+      student.classParticipationScore * 0.4 + 
+      Math.sqrt(student.challengeCompletionRate) * 3
+    );
+    
+    const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
+                         student.feePaymentStatus === "delayed" ? 55 : 15;
+    
+    const socialRisk = student.classParticipationScore < 50 
+      ? 100 - student.classParticipationScore + 10  // Penalty for low participation
+      : 100 - student.classParticipationScore;
+    
+    // Dynamic weighting based on severity
+    const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
+    const weights = {
+      academic: maxRisk === academicRisk ? 0.40 : 0.30,
+      attendance: maxRisk === attendanceRisk ? 0.35 : 0.25,
+      engagement: maxRisk === engagementRisk ? 0.25 : 0.20,
+      financial: 0.10,
+      social: 0.10,
+    };
+    
+    const riskScore = (
+      academicRisk * weights.academic +
+      attendanceRisk * weights.attendance +
+      engagementRisk * weights.engagement +
+      financialRisk * weights.financial +
+      socialRisk * weights.social
+    );
+    
+    let riskLevel: "low" | "moderate" | "high";
+    if (riskScore < 35) riskLevel = "low";
+    else if (riskScore < 65) riskLevel = "moderate";
+    else riskLevel = "high";
+    
+    const recommendations: string[] = [];
+    if (academicRisk > 60) recommendations.push("Urgent: Intensive academic support required");
+    if (academicRisk > 45 && academicRisk <= 60) recommendations.push("Schedule regular tutoring sessions");
+    if (attendanceRisk > 50) recommendations.push("Critical: Address chronic absenteeism immediately");
+    if (engagementRisk > 55) recommendations.push("Implement personalized engagement strategies");
+    if (financialRisk > 50) recommendations.push("Priority: Connect with financial aid office");
+    if (socialRisk > 65) recommendations.push("Refer to counseling for social integration support");
+    
+    let trendDirection = "stable";
+    if (previous) {
+      if (riskScore < previous.riskScore - 7) trendDirection = "improving";
+      else if (riskScore > previous.riskScore + 7) trendDirection = "declining";
+    }
+    
+    await ctx.db.insert("riskAssessments", {
+      studentId: args.studentId,
+      riskLevel,
+      riskScore,
+      academicRisk,
+      attendanceRisk,
+      engagementRisk,
+      financialRisk,
+      socialRisk,
+      recommendations,
+      predictedDropoutProbability: riskScore,
+      trendDirection,
+      previousScore: previous?.riskScore,
+    });
+    
+    return { riskLevel, riskScore, trendDirection, algorithm: "ML-Inspired" };
+  },
+});
+
+// ALGORITHM 3: Holistic Balanced with Interaction Effects
+export const calculateRiskHolistic = mutation({
+  args: { studentId: v.id("students") },
+  handler: async (ctx, args) => {
+    const student = await ctx.db.get(args.studentId);
+    if (!student) throw new Error("Student not found");
+    
+    const previous = await ctx.db
+      .query("riskAssessments")
+      .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
+      .order("desc")
+      .first();
+    
+    // Equal weighting approach with compound factors
+    const academicRisk = 100 - (
+      (student.currentCGPA / 10.0) * 33.33 + 
+      student.assignmentCompletionRate * 0.33 + 
+      student.testScoreAverage * 0.33
+    );
+    
+    const attendanceRisk = 100 - (
+      student.attendanceRate * 0.7 + 
+      (100 - student.totalAbsences * 2) * 0.2 + 
+      (100 - student.tardinessCount * 5) * 0.1
+    );
+    
+    const engagementRisk = 100 - (
+      (student.loginFrequency / 7) * 25 + 
+      student.classParticipationScore * 0.5 + 
+      student.challengeCompletionRate * 0.25
+    );
+    
+    const financialRisk = student.feePaymentStatus === "overdue" ? 75 : 
+                         student.feePaymentStatus === "delayed" ? 45 : 
+                         student.hasScholarship ? 10 : 20;
+    
+    const socialRisk = 100 - (
+      student.classParticipationScore * 0.6 + 
+      (student.currentStreak / student.longestStreak || 0) * 40
+    );
+    
+    // Interaction effects: compound risks when multiple factors are high
+    const compoundMultiplier = 1 + (
+      (academicRisk > 60 && attendanceRisk > 60 ? 0.15 : 0) +
+      (academicRisk > 60 && engagementRisk > 60 ? 0.15 : 0) +
+      (attendanceRisk > 60 && engagementRisk > 60 ? 0.10 : 0) +
+      (financialRisk > 60 && academicRisk > 50 ? 0.10 : 0)
+    );
+    
+    // Equal weighting (20% each)
+    const baseRiskScore = (
+      academicRisk * 0.20 +
+      attendanceRisk * 0.20 +
+      engagementRisk * 0.20 +
+      financialRisk * 0.20 +
+      socialRisk * 0.20
+    );
+    
+    const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
+    
+    let riskLevel: "low" | "moderate" | "high";
+    if (riskScore < 33) riskLevel = "low";
+    else if (riskScore < 66) riskLevel = "moderate";
+    else riskLevel = "high";
+    
+    const recommendations: string[] = [];
+    if (compoundMultiplier > 1.2) recommendations.push("Multiple risk factors detected - comprehensive intervention needed");
+    if (academicRisk > 50) recommendations.push("Provide academic mentoring and study skills training");
+    if (attendanceRisk > 45) recommendations.push("Implement attendance monitoring and parent communication");
+    if (engagementRisk > 50) recommendations.push("Create personalized learning pathways to boost engagement");
+    if (financialRisk > 50) recommendations.push("Explore scholarship opportunities and payment plans");
+    if (socialRisk > 55) recommendations.push("Foster peer connections through group projects and activities");
+    if (riskScore > 70) recommendations.push("Assign dedicated counselor for holistic support");
+    
+    let trendDirection = "stable";
+    if (previous) {
+      const change = previous.riskScore - riskScore;
+      if (change > 6) trendDirection = "improving";
+      else if (change < -6) trendDirection = "declining";
+    }
+    
+    await ctx.db.insert("riskAssessments", {
+      studentId: args.studentId,
+      riskLevel,
+      riskScore,
+      academicRisk,
+      attendanceRisk,
+      engagementRisk,
+      financialRisk,
+      socialRisk,
+      recommendations,
+      predictedDropoutProbability: riskScore,
+      trendDirection,
+      previousScore: previous?.riskScore,
+    });
+    
+    return { riskLevel, riskScore, trendDirection, algorithm: "Holistic-Balanced", compoundMultiplier };
   },
 });
 
