@@ -50,7 +50,7 @@ export const create = mutation({
   },
 });
 
-// Calculate risk assessment - Uses ML-Based algorithm as primary (most accurate)
+// Calculate risk assessment - Uses ML + Holistic Combined algorithm as primary (most accurate)
 export const calculateRisk = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
@@ -64,27 +64,57 @@ export const calculateRisk = mutation({
       .order("desc")
       .first();
     
-    // ML-Based: Non-linear scoring with exponential penalties (most accurate)
+    // ML-BASED COMPONENT: Non-linear with exponential penalties
     const cgpaScore = student.currentCGPA / 10.0;
-    const academicRisk = cgpaScore < 0.5 
-      ? 90 + (0.5 - cgpaScore) * 20  // Exponential penalty below 5.0 CGPA
+    const mlAcademic = cgpaScore < 0.5 
+      ? 90 + (0.5 - cgpaScore) * 20
       : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
     
-    const attendanceRisk = student.attendanceRate < 75 
-      ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5  // Extra penalty below 75%
+    const mlAttendance = student.attendanceRate < 75 
+      ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
       : 100 - student.attendanceRate;
     
-    const engagementRisk = 100 - (
+    const mlEngagement = 100 - (
       Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
       student.classParticipationScore * 0.4 + 
       Math.sqrt(student.challengeCompletionRate) * 3
     );
     
+    // HOLISTIC COMPONENT: Equal weighting with compound effects
+    const holisticAcademic = 100 - (
+      (student.currentCGPA / 10.0) * 33.33 + 
+      student.assignmentCompletionRate * 0.33 + 
+      student.testScoreAverage * 0.33
+    );
+    
+    const holisticAttendance = 100 - (
+      student.attendanceRate * 0.7 + 
+      (100 - student.totalAbsences * 2) * 0.2 + 
+      (100 - student.tardinessCount * 5) * 0.1
+    );
+    
+    const holisticEngagement = 100 - (
+      (student.loginFrequency / 7) * 25 + 
+      student.classParticipationScore * 0.5 + 
+      student.challengeCompletionRate * 0.25
+    );
+    
+    // Compound multiplier for interaction effects
+    const compoundMultiplier = 1 + (
+      (holisticAcademic > 60 && holisticAttendance > 60 ? 0.15 : 0) +
+      (holisticAcademic > 60 && holisticEngagement > 60 ? 0.15 : 0) +
+      (holisticAttendance > 60 && holisticEngagement > 60 ? 0.10 : 0) +
+      (student.feePaymentStatus !== "current" && holisticAcademic > 50 ? 0.10 : 0)
+    );
+    
+    // COMBINED: 55% ML-Based (early detection) + 45% Holistic (compound effects)
+    const academicRisk = mlAcademic * 0.55 + holisticAcademic * 0.45;
+    const attendanceRisk = mlAttendance * 0.55 + holisticAttendance * 0.45;
+    const engagementRisk = mlEngagement * 0.55 + holisticEngagement * 0.45;
     const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
                          student.feePaymentStatus === "delayed" ? 55 : 15;
-    
     const socialRisk = student.classParticipationScore < 50 
-      ? 100 - student.classParticipationScore + 10  // Penalty for low participation
+      ? 100 - student.classParticipationScore + 10
       : 100 - student.classParticipationScore;
     
     // Dynamic weighting based on severity
@@ -97,13 +127,15 @@ export const calculateRisk = mutation({
       social: 0.10,
     };
     
-    const riskScore = (
+    const baseRiskScore = (
       academicRisk * weights.academic +
       attendanceRisk * weights.attendance +
       engagementRisk * weights.engagement +
       financialRisk * weights.financial +
       socialRisk * weights.social
     );
+    
+    const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
     
     // Determine risk level
     let riskLevel: "low" | "moderate" | "high";
@@ -113,12 +145,14 @@ export const calculateRisk = mutation({
     
     // Generate recommendations
     const recommendations: string[] = [];
+    if (compoundMultiplier > 1.2) recommendations.push("Multiple risk factors detected - comprehensive intervention needed");
     if (academicRisk > 60) recommendations.push("Urgent: Intensive academic support required");
     if (academicRisk > 45 && academicRisk <= 60) recommendations.push("Schedule regular tutoring sessions");
     if (attendanceRisk > 50) recommendations.push("Critical: Address chronic absenteeism immediately");
     if (engagementRisk > 55) recommendations.push("Implement personalized engagement strategies");
     if (financialRisk > 50) recommendations.push("Priority: Connect with financial aid office");
     if (socialRisk > 65) recommendations.push("Refer to counseling for social integration support");
+    if (riskScore > 70) recommendations.push("Assign dedicated counselor for holistic support");
     
     // Trend direction
     let trendDirection = "stable";
