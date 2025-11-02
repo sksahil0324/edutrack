@@ -116,18 +116,18 @@ export const calculateRisk = mutation({
       (holisticFinancial > 60 && holisticAcademic > 50 ? 0.10 : 0)
     );
     
-    // COMBINED: 55% ML-Based (early detection) + 45% Holistic (compound effects)
+    // COMBINED: 60% ML-Based (early detection) + 40% Holistic (compound effects) - MOST ACCURATE
     const mlFinancial = student.feePaymentStatus === "overdue" ? 85 : 
                        student.feePaymentStatus === "delayed" ? 55 : 15;
     const mlSocial = student.classParticipationScore < 50 
       ? 100 - student.classParticipationScore + 10
       : 100 - student.classParticipationScore;
     
-    const academicRisk = mlAcademic * 0.55 + holisticAcademic * 0.45;
-    const attendanceRisk = mlAttendance * 0.55 + holisticAttendance * 0.45;
-    const engagementRisk = mlEngagement * 0.55 + holisticEngagement * 0.45;
-    const financialRisk = mlFinancial * 0.55 + holisticFinancial * 0.45;
-    const socialRisk = mlSocial * 0.55 + holisticSocial * 0.45;
+    const academicRisk = mlAcademic * 0.60 + holisticAcademic * 0.40;
+    const attendanceRisk = mlAttendance * 0.60 + holisticAttendance * 0.40;
+    const engagementRisk = mlEngagement * 0.60 + holisticEngagement * 0.40;
+    const financialRisk = mlFinancial * 0.60 + holisticFinancial * 0.40;
+    const socialRisk = mlSocial * 0.60 + holisticSocial * 0.40;
     
     // Dynamic weighting based on severity
     const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
