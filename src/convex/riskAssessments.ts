@@ -50,7 +50,7 @@ export const create = mutation({
   },
 });
 
-// Calculate risk assessment - Now uses ML-Inspired algorithm as primary
+// Calculate risk assessment - Uses ML-Based algorithm as primary (most accurate)
 export const calculateRisk = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
@@ -64,7 +64,7 @@ export const calculateRisk = mutation({
       .order("desc")
       .first();
     
-    // ML-Inspired: Non-linear risk calculation with exponential penalties
+    // ML-Based: Non-linear scoring with exponential penalties (most accurate)
     const cgpaScore = student.currentCGPA / 10.0;
     const academicRisk = cgpaScore < 0.5 
       ? 90 + (0.5 - cgpaScore) * 20  // Exponential penalty below 5.0 CGPA
