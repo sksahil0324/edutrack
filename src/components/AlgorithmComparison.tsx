@@ -12,8 +12,9 @@ interface AlgorithmResult {
 }
 
 interface ComparisonData {
-  original: AlgorithmResult;
-  ml: AlgorithmResult;
+  ruleBased: AlgorithmResult;
+  mlBased: AlgorithmResult;
+  hybrid: AlgorithmResult;
   holistic: AlgorithmResult;
   comparison: {
     averageScore: number;
@@ -54,16 +55,22 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
 
   const algorithms = [
     {
-      data: data.original,
-      description: "Weighted multi-factor approach with fixed weights",
+      data: data.ruleBased,
+      description: "Traditional weighted approach with fixed weights",
       features: ["Transparent & Explainable", "Predictable Behavior", "Good Baseline"],
       highlighted: false,
     },
     {
-      data: data.ml,
-      description: "Non-linear scoring with dynamic weights",
+      data: data.mlBased,
+      description: "Non-linear scoring with dynamic weights and exponential penalties",
       features: ["Early Intervention Focus", "Adaptive Weighting", "Critical Threshold Detection"],
       highlighted: true,
+    },
+    {
+      data: data.hybrid,
+      description: "Combines Rule-Based and ML-Based approaches (60% ML, 40% Rule)",
+      features: ["Balanced Approach", "Hybrid Strengths", "Robust Predictions"],
+      highlighted: false,
     },
     {
       data: data.holistic,
@@ -87,12 +94,12 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
             Multi-Algorithm Risk Assessment
           </CardTitle>
           <CardDescription className="text-base">
-            Comprehensive analysis using three distinct AI algorithms
+            Comprehensive analysis using four distinct AI algorithms
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Individual Algorithm Results */}
-          <div className="grid md:grid-cols-3 gap-4 lg:gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
             {algorithms.map((algo, index) => (
               <motion.div
                 key={algo.data.algorithm}
