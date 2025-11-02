@@ -537,7 +537,7 @@ export const calculateAllAlgorithms = mutation({
     
     return {
       ruleBased,
-      mlBased,
+      mlHolistic: mlBased,
       holistic,
       comparison: {
         averageScore: avgScore,
