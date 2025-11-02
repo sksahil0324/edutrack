@@ -73,6 +73,9 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
     },
   ];
 
+  // Filter out undefined algorithms
+  const validAlgorithms = algorithms.filter(algo => algo.data !== undefined);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -93,7 +96,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
         <CardContent className="space-y-6 pt-6">
           {/* Individual Algorithm Results */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
-            {algorithms.map((algo, index) => (
+            {validAlgorithms.map((algo, index) => (
               <motion.div
                 key={algo.data.algorithm}
                 initial={{ opacity: 0, y: 20 }}
@@ -216,7 +219,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
           >
             <h4 className="font-semibold text-base">Score Distribution</h4>
             <div className="space-y-4">
-              {algorithms.map((algo) => (
+              {validAlgorithms.map((algo) => (
                 <div key={algo.data.algorithm} className="space-y-2">
                   <div className="flex justify-between items-center text-base">
                     <span className="font-medium">{algo.data.algorithm}</span>
