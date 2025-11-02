@@ -99,23 +99,35 @@ export const calculateRisk = mutation({
       student.challengeCompletionRate * 0.25
     );
     
+    const holisticFinancial = student.feePaymentStatus === "overdue" ? 75 : 
+                             student.feePaymentStatus === "delayed" ? 45 : 
+                             student.hasScholarship ? 10 : 20;
+    
+    const holisticSocial = 100 - (
+      student.classParticipationScore * 0.6 + 
+      (student.currentStreak / student.longestStreak || 0) * 40
+    );
+    
     // Compound multiplier for interaction effects
     const compoundMultiplier = 1 + (
       (holisticAcademic > 60 && holisticAttendance > 60 ? 0.15 : 0) +
       (holisticAcademic > 60 && holisticEngagement > 60 ? 0.15 : 0) +
       (holisticAttendance > 60 && holisticEngagement > 60 ? 0.10 : 0) +
-      (student.feePaymentStatus !== "current" && holisticAcademic > 50 ? 0.10 : 0)
+      (holisticFinancial > 60 && holisticAcademic > 50 ? 0.10 : 0)
     );
     
     // COMBINED: 55% ML-Based (early detection) + 45% Holistic (compound effects)
+    const mlFinancial = student.feePaymentStatus === "overdue" ? 85 : 
+                       student.feePaymentStatus === "delayed" ? 55 : 15;
+    const mlSocial = student.classParticipationScore < 50 
+      ? 100 - student.classParticipationScore + 10
+      : 100 - student.classParticipationScore;
+    
     const academicRisk = mlAcademic * 0.55 + holisticAcademic * 0.45;
     const attendanceRisk = mlAttendance * 0.55 + holisticAttendance * 0.45;
     const engagementRisk = mlEngagement * 0.55 + holisticEngagement * 0.45;
-    const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
-                         student.feePaymentStatus === "delayed" ? 55 : 15;
-    const socialRisk = student.classParticipationScore < 50 
-      ? 100 - student.classParticipationScore + 10
-      : 100 - student.classParticipationScore;
+    const financialRisk = mlFinancial * 0.55 + holisticFinancial * 0.45;
+    const socialRisk = mlSocial * 0.55 + holisticSocial * 0.45;
     
     // Dynamic weighting based on severity
     const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
