@@ -99,58 +99,58 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Individual Algorithm Results */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             {algorithms.map((algo, index) => (
               <motion.div
                 key={algo.data.algorithm}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={`relative p-6 border-2 rounded-lg space-y-4 transition-all hover:shadow-md overflow-hidden ${ 
+                className={`relative p-4 border-2 rounded-lg space-y-3 transition-all hover:shadow-md overflow-hidden min-w-0 ${ 
                   algo.highlighted ? "border-primary bg-primary/5" : getRiskBorderColor(algo.data.riskLevel)
                 }`}
               >
-                <div className="space-y-3 w-full">
-                  <div className="flex items-start justify-between gap-2 w-full">
-                    <div className="flex items-center gap-1 flex-1">
-                      <h4 className="font-semibold text-sm leading-tight">
+                <div className="space-y-2 w-full">
+                  <div className="flex items-start justify-between gap-1 w-full">
+                    <div className="flex items-center gap-1 flex-1 min-w-0">
+                      <h4 className="font-semibold text-xs leading-tight truncate">
                         {algo.data.algorithm}
                       </h4>
-                      {algo.highlighted && <TrendingUp className="w-4 h-4 text-primary flex-shrink-0" />}
+                      {algo.highlighted && <TrendingUp className="w-3 h-3 text-primary flex-shrink-0" />}
                     </div>
                   </div>
 
                   {algo.highlighted && (
-                    <div className="text-sm border border-primary text-primary inline-block px-2 py-1 rounded mt-2">
+                    <div className="text-xs border border-primary text-primary inline-block px-1.5 py-0.5 rounded">
                       Recommended
                     </div>
                   )}
                 </div>
 
                 <div>
-                  <div className="text-4xl font-bold text-center mb-3">
+                  <div className="text-3xl font-bold text-center mb-2">
                     {algo.data.riskScore.toFixed(1)}%
                   </div>
-                  <Progress value={algo.data.riskScore} className="h-4" />
+                  <Progress value={algo.data.riskScore} className="h-3" />
                 </div>
 
-                <p className="text-sm text-muted-foreground leading-relaxed">
+                <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
                   {algo.description}
                 </p>
 
-                <div className="space-y-2 pt-3 border-t">
+                <div className="space-y-1 pt-2 border-t">
                   {algo.features.map((feature, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-sm">
+                    <div key={idx} className="flex items-start gap-1 text-xs">
                       <span className="text-primary mt-0.5 flex-shrink-0">✓</span>
-                      <span className="text-muted-foreground">{feature}</span>
+                      <span className="text-muted-foreground line-clamp-1">{feature}</span>
                     </div>
                   ))}
                 </div>
 
                 {algo.data.compoundMultiplier && algo.data.compoundMultiplier > 1 && (
-                  <div className="pt-3 border-t">
-                    <div className="text-sm text-muted-foreground">Compound Risk Multiplier</div>
-                    <div className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+                  <div className="pt-2 border-t">
+                    <div className="text-xs text-muted-foreground">Compound Risk Multiplier</div>
+                    <div className="text-base font-semibold text-orange-600 dark:text-orange-400">
                       {algo.data.compoundMultiplier.toFixed(2)}x
                     </div>
                   </div>
