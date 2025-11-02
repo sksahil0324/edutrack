@@ -13,8 +13,7 @@ interface AlgorithmResult {
 
 interface ComparisonData {
   ruleBased: AlgorithmResult;
-  mlBased: AlgorithmResult;
-  hybrid: AlgorithmResult;
+  mlHolistic: AlgorithmResult;
   holistic: AlgorithmResult;
   comparison: {
     averageScore: number;
@@ -61,8 +60,8 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
       highlighted: false,
     },
     {
-      data: data.mlBased,
-      description: "Non-linear scoring with dynamic weights and exponential penalties combined with holistic compound effects",
+      data: data.mlHolistic,
+      description: "Combines ML-Based early detection with Holistic compound risk analysis for maximum accuracy",
       features: ["Early Intervention Focus", "Compound Risk Detection", "Most Accurate"],
       highlighted: true,
     },
