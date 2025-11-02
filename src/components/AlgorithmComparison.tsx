@@ -62,20 +62,14 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
     },
     {
       data: data.mlBased,
-      description: "Non-linear scoring with dynamic weights and exponential penalties",
-      features: ["Early Intervention Focus", "Adaptive Weighting", "Critical Threshold Detection"],
+      description: "Non-linear scoring with dynamic weights and exponential penalties combined with holistic compound effects",
+      features: ["Early Intervention Focus", "Compound Risk Detection", "Most Accurate"],
       highlighted: true,
     },
     {
-      data: data.hybrid,
-      description: "Combines Rule-Based and ML-Based approaches (60% ML, 40% Rule)",
-      features: ["Balanced Approach", "Hybrid Strengths", "Robust Predictions"],
-      highlighted: false,
-    },
-    {
       data: data.holistic,
-      description: "Equal weighting with compound risk detection",
-      features: ["Comprehensive View", "Interaction Effects", "Positive Indicators"],
+      description: "Equal weighting with compound risk detection and interaction effects",
+      features: ["Comprehensive View", "Interaction Effects", "Multi-factor Analysis"],
       highlighted: false,
     },
   ];
@@ -99,7 +93,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Individual Algorithm Results */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
             {algorithms.map((algo, index) => (
               <motion.div
                 key={algo.data.algorithm}

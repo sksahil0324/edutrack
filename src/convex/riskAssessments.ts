@@ -147,7 +147,7 @@ export const calculateRisk = mutation({
   },
 });
 
-// ALGORITHM 2: Hybrid ML + Rule-Based Algorithm
+// ALGORITHM 2: ML + Holistic Combined (Most Accurate)
 export const calculateRiskML = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
@@ -160,16 +160,7 @@ export const calculateRiskML = mutation({
       .order("desc")
       .first();
     
-    // RULE-BASED COMPONENT: Traditional weighted approach
-    const ruleBased = {
-      academic: 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4),
-      attendance: 100 - student.attendanceRate,
-      engagement: 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2),
-      financial: student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20,
-      social: 100 - student.classParticipationScore,
-    };
-    
-    // ML-INSPIRED COMPONENT: Non-linear with exponential penalties
+    // ML-BASED COMPONENT: Non-linear with exponential penalties
     const cgpaScore = student.currentCGPA / 10.0;
     const mlBased = {
       academic: cgpaScore < 0.5 
@@ -190,14 +181,50 @@ export const calculateRiskML = mutation({
         : 100 - student.classParticipationScore,
     };
     
-    // HYBRID COMBINATION: Blend both approaches (60% ML-Inspired, 40% Rule-Based)
-    const academicRisk = mlBased.academic * 0.6 + ruleBased.academic * 0.4;
-    const attendanceRisk = mlBased.attendance * 0.6 + ruleBased.attendance * 0.4;
-    const engagementRisk = mlBased.engagement * 0.6 + ruleBased.engagement * 0.4;
-    const financialRisk = mlBased.financial * 0.6 + ruleBased.financial * 0.4;
-    const socialRisk = mlBased.social * 0.6 + ruleBased.social * 0.4;
+    // HOLISTIC COMPONENT: Equal weighting with compound effects
+    const holisticAcademic = 100 - (
+      (student.currentCGPA / 10.0) * 33.33 + 
+      student.assignmentCompletionRate * 0.33 + 
+      student.testScoreAverage * 0.33
+    );
     
-    // Dynamic weighting based on severity (adaptive to highest risk factor)
+    const holisticAttendance = 100 - (
+      student.attendanceRate * 0.7 + 
+      (100 - student.totalAbsences * 2) * 0.2 + 
+      (100 - student.tardinessCount * 5) * 0.1
+    );
+    
+    const holisticEngagement = 100 - (
+      (student.loginFrequency / 7) * 25 + 
+      student.classParticipationScore * 0.5 + 
+      student.challengeCompletionRate * 0.25
+    );
+    
+    const holisticFinancial = student.feePaymentStatus === "overdue" ? 75 : 
+                             student.feePaymentStatus === "delayed" ? 45 : 
+                             student.hasScholarship ? 10 : 20;
+    
+    const holisticSocial = 100 - (
+      student.classParticipationScore * 0.6 + 
+      (student.currentStreak / student.longestStreak || 0) * 40
+    );
+    
+    // Compound multiplier for interaction effects
+    const compoundMultiplier = 1 + (
+      (holisticAcademic > 60 && holisticAttendance > 60 ? 0.15 : 0) +
+      (holisticAcademic > 60 && holisticEngagement > 60 ? 0.15 : 0) +
+      (holisticAttendance > 60 && holisticEngagement > 60 ? 0.10 : 0) +
+      (holisticFinancial > 60 && holisticAcademic > 50 ? 0.10 : 0)
+    );
+    
+    // COMBINED: 55% ML-Based (early detection) + 45% Holistic (compound effects)
+    const academicRisk = mlBased.academic * 0.55 + holisticAcademic * 0.45;
+    const attendanceRisk = mlBased.attendance * 0.55 + holisticAttendance * 0.45;
+    const engagementRisk = mlBased.engagement * 0.55 + holisticEngagement * 0.45;
+    const financialRisk = mlBased.financial * 0.55 + holisticFinancial * 0.45;
+    const socialRisk = mlBased.social * 0.55 + holisticSocial * 0.45;
+    
+    // Dynamic weighting based on severity
     const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
     const weights = {
       academic: maxRisk === academicRisk ? 0.40 : 0.30,
@@ -207,7 +234,7 @@ export const calculateRiskML = mutation({
       social: 0.10,
     };
     
-    const riskScore = (
+    const baseRiskScore = (
       academicRisk * weights.academic +
       attendanceRisk * weights.attendance +
       engagementRisk * weights.engagement +
@@ -215,18 +242,22 @@ export const calculateRiskML = mutation({
       socialRisk * weights.social
     );
     
+    const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
+    
     let riskLevel: "low" | "moderate" | "high";
     if (riskScore < 35) riskLevel = "low";
     else if (riskScore < 65) riskLevel = "moderate";
     else riskLevel = "high";
     
     const recommendations: string[] = [];
+    if (compoundMultiplier > 1.2) recommendations.push("Multiple risk factors detected - comprehensive intervention needed");
     if (academicRisk > 60) recommendations.push("Urgent: Intensive academic support required");
     if (academicRisk > 45 && academicRisk <= 60) recommendations.push("Schedule regular tutoring sessions");
     if (attendanceRisk > 50) recommendations.push("Critical: Address chronic absenteeism immediately");
     if (engagementRisk > 55) recommendations.push("Implement personalized engagement strategies");
     if (financialRisk > 50) recommendations.push("Priority: Connect with financial aid office");
     if (socialRisk > 65) recommendations.push("Refer to counseling for social integration support");
+    if (riskScore > 70) recommendations.push("Assign dedicated counselor for holistic support");
     
     let trendDirection = "stable";
     if (previous) {
@@ -249,7 +280,7 @@ export const calculateRiskML = mutation({
       previousScore: previous?.riskScore,
     });
     
-    return { riskLevel, riskScore, trendDirection, algorithm: "Hybrid (ML + Rule-Based)" };
+    return { riskLevel, riskScore, trendDirection, algorithm: "ML + Holistic (Most Accurate)" };
   },
 });
 
@@ -440,71 +471,7 @@ export const calculateAllAlgorithms = mutation({
       return { riskScore, riskLevel, algorithm: "ML-Based" };
     };
     
-    // ALGORITHM 3: Hybrid (Rule + ML with 60% ML, 40% Rule)
-    const calculateHybrid = () => {
-      // Rule-Based Component
-      const ruleBased = {
-        academic: 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4),
-        attendance: 100 - student.attendanceRate,
-        engagement: 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2),
-        financial: student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20,
-        social: 100 - student.classParticipationScore,
-      };
-      
-      // ML-Based Component
-      const cgpaScore = student.currentCGPA / 10.0;
-      const mlBased = {
-        academic: cgpaScore < 0.5 
-          ? 90 + (0.5 - cgpaScore) * 20
-          : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2),
-        attendance: student.attendanceRate < 75 
-          ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
-          : 100 - student.attendanceRate,
-        engagement: 100 - (
-          Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
-          student.classParticipationScore * 0.4 + 
-          Math.sqrt(student.challengeCompletionRate) * 3
-        ),
-        financial: student.feePaymentStatus === "overdue" ? 85 : 
-                   student.feePaymentStatus === "delayed" ? 55 : 15,
-        social: student.classParticipationScore < 50 
-          ? 100 - student.classParticipationScore + 10
-          : 100 - student.classParticipationScore,
-      };
-      
-      // Hybrid: 60% ML, 40% Rule
-      const academicRisk = mlBased.academic * 0.6 + ruleBased.academic * 0.4;
-      const attendanceRisk = mlBased.attendance * 0.6 + ruleBased.attendance * 0.4;
-      const engagementRisk = mlBased.engagement * 0.6 + ruleBased.engagement * 0.4;
-      const financialRisk = mlBased.financial * 0.6 + ruleBased.financial * 0.4;
-      const socialRisk = mlBased.social * 0.6 + ruleBased.social * 0.4;
-      
-      const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
-      const weights = {
-        academic: maxRisk === academicRisk ? 0.40 : 0.30,
-        attendance: maxRisk === attendanceRisk ? 0.35 : 0.25,
-        engagement: maxRisk === engagementRisk ? 0.25 : 0.20,
-        financial: 0.10,
-        social: 0.10,
-      };
-      
-      const riskScore = (
-        academicRisk * weights.academic +
-        attendanceRisk * weights.attendance +
-        engagementRisk * weights.engagement +
-        financialRisk * weights.financial +
-        socialRisk * weights.social
-      );
-      
-      let riskLevel: "low" | "moderate" | "high";
-      if (riskScore < 35) riskLevel = "low";
-      else if (riskScore < 65) riskLevel = "moderate";
-      else riskLevel = "high";
-      
-      return { riskScore, riskLevel, algorithm: "Hybrid (Rule + ML)" };
-    };
-    
-    // ALGORITHM 4: Holistic Balanced
+    // ALGORITHM 3: Holistic Balanced
     const calculateHolistic = () => {
       const academicRisk = 100 - (
         (student.currentCGPA / 10.0) * 33.33 + 
@@ -560,26 +527,23 @@ export const calculateAllAlgorithms = mutation({
     
     const ruleBased = calculateRuleBased();
     const mlBased = calculateMLBased();
-    const hybrid = calculateHybrid();
     const holistic = calculateHolistic();
     
     // Calculate average and consensus
-    const avgScore = (ruleBased.riskScore + mlBased.riskScore + hybrid.riskScore + holistic.riskScore) / 4;
-    const scores = [ruleBased.riskScore, mlBased.riskScore, hybrid.riskScore, holistic.riskScore];
-    const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 4;
+    const avgScore = (ruleBased.riskScore + mlBased.riskScore + holistic.riskScore) / 3;
+    const scores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore];
+    const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 3;
     const agreement = variance < 100 ? "high" : variance < 400 ? "moderate" : "low";
     
     return {
       ruleBased,
       mlBased,
-      hybrid,
       holistic,
       comparison: {
         averageScore: avgScore,
         variance,
         agreement,
-        recommendation: mlBased.riskScore > 60 ? "ML-Based flags urgent intervention needed" :
-                       hybrid.riskScore > 60 ? "Hybrid suggests comprehensive support" :
+        recommendation: mlBased.riskScore > 60 ? "ML + Holistic flags urgent intervention needed" :
                        holistic.riskScore > 60 ? "Holistic indicates multiple risk factors" :
                        "All algorithms indicate manageable risk"
       }
