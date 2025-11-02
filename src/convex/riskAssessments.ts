@@ -147,7 +147,7 @@ export const calculateRisk = mutation({
   },
 });
 
-// ALGORITHM 2: Machine Learning-Inspired with Non-Linear Penalties
+// ALGORITHM 2: Hybrid ML + Rule-Based Algorithm
 export const calculateRiskML = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
@@ -160,30 +160,44 @@ export const calculateRiskML = mutation({
       .order("desc")
       .first();
     
-    // Non-linear risk calculation with exponential penalties for critical thresholds
+    // RULE-BASED COMPONENT: Traditional weighted approach
+    const ruleBased = {
+      academic: 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4),
+      attendance: 100 - student.attendanceRate,
+      engagement: 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2),
+      financial: student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20,
+      social: 100 - student.classParticipationScore,
+    };
+    
+    // ML-INSPIRED COMPONENT: Non-linear with exponential penalties
     const cgpaScore = student.currentCGPA / 10.0;
-    const academicRisk = cgpaScore < 0.5 
-      ? 90 + (0.5 - cgpaScore) * 20  // Exponential penalty below 5.0 CGPA
-      : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
+    const mlBased = {
+      academic: cgpaScore < 0.5 
+        ? 90 + (0.5 - cgpaScore) * 20
+        : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2),
+      attendance: student.attendanceRate < 75 
+        ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
+        : 100 - student.attendanceRate,
+      engagement: 100 - (
+        Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+        student.classParticipationScore * 0.4 + 
+        Math.sqrt(student.challengeCompletionRate) * 3
+      ),
+      financial: student.feePaymentStatus === "overdue" ? 85 : 
+                 student.feePaymentStatus === "delayed" ? 55 : 15,
+      social: student.classParticipationScore < 50 
+        ? 100 - student.classParticipationScore + 10
+        : 100 - student.classParticipationScore,
+    };
     
-    const attendanceRisk = student.attendanceRate < 75 
-      ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5  // Extra penalty below 75%
-      : 100 - student.attendanceRate;
+    // HYBRID COMBINATION: Blend both approaches (60% ML-Inspired, 40% Rule-Based)
+    const academicRisk = mlBased.academic * 0.6 + ruleBased.academic * 0.4;
+    const attendanceRisk = mlBased.attendance * 0.6 + ruleBased.attendance * 0.4;
+    const engagementRisk = mlBased.engagement * 0.6 + ruleBased.engagement * 0.4;
+    const financialRisk = mlBased.financial * 0.6 + ruleBased.financial * 0.4;
+    const socialRisk = mlBased.social * 0.6 + ruleBased.social * 0.4;
     
-    const engagementRisk = 100 - (
-      Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
-      student.classParticipationScore * 0.4 + 
-      Math.sqrt(student.challengeCompletionRate) * 3
-    );
-    
-    const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
-                         student.feePaymentStatus === "delayed" ? 55 : 15;
-    
-    const socialRisk = student.classParticipationScore < 50 
-      ? 100 - student.classParticipationScore + 10  // Penalty for low participation
-      : 100 - student.classParticipationScore;
-    
-    // Dynamic weighting based on severity
+    // Dynamic weighting based on severity (adaptive to highest risk factor)
     const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
     const weights = {
       academic: maxRisk === academicRisk ? 0.40 : 0.30,
@@ -235,7 +249,7 @@ export const calculateRiskML = mutation({
       previousScore: previous?.riskScore,
     });
     
-    return { riskLevel, riskScore, trendDirection, algorithm: "ML-Inspired" };
+    return { riskLevel, riskScore, trendDirection, algorithm: "Hybrid (ML + Rule-Based)" };
   },
 });
 
@@ -378,27 +392,42 @@ export const calculateAllAlgorithms = mutation({
     };
     
     const calculateML = () => {
+      // RULE-BASED COMPONENT
+      const ruleBased = {
+        academic: 100 - ((student.currentCGPA / 10.0) * 25 + student.assignmentCompletionRate * 0.35 + student.testScoreAverage * 0.4),
+        attendance: 100 - student.attendanceRate,
+        engagement: 100 - ((student.loginFrequency / 7) * 30 + student.classParticipationScore * 0.5 + student.challengeCompletionRate * 0.2),
+        financial: student.feePaymentStatus === "overdue" ? 80 : student.feePaymentStatus === "delayed" ? 50 : 20,
+        social: 100 - student.classParticipationScore,
+      };
+      
+      // ML-INSPIRED COMPONENT
       const cgpaScore = student.currentCGPA / 10.0;
-      const academicRisk = cgpaScore < 0.5 
-        ? 90 + (0.5 - cgpaScore) * 20
-        : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
+      const mlBased = {
+        academic: cgpaScore < 0.5 
+          ? 90 + (0.5 - cgpaScore) * 20
+          : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2),
+        attendance: student.attendanceRate < 75 
+          ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
+          : 100 - student.attendanceRate,
+        engagement: 100 - (
+          Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+          student.classParticipationScore * 0.4 + 
+          Math.sqrt(student.challengeCompletionRate) * 3
+        ),
+        financial: student.feePaymentStatus === "overdue" ? 85 : 
+                   student.feePaymentStatus === "delayed" ? 55 : 15,
+        social: student.classParticipationScore < 50 
+          ? 100 - student.classParticipationScore + 10
+          : 100 - student.classParticipationScore,
+      };
       
-      const attendanceRisk = student.attendanceRate < 75 
-        ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
-        : 100 - student.attendanceRate;
-      
-      const engagementRisk = 100 - (
-        Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
-        student.classParticipationScore * 0.4 + 
-        Math.sqrt(student.challengeCompletionRate) * 3
-      );
-      
-      const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
-                           student.feePaymentStatus === "delayed" ? 55 : 15;
-      
-      const socialRisk = student.classParticipationScore < 50 
-        ? 100 - student.classParticipationScore + 10
-        : 100 - student.classParticipationScore;
+      // HYBRID: 60% ML-Inspired, 40% Rule-Based
+      const academicRisk = mlBased.academic * 0.6 + ruleBased.academic * 0.4;
+      const attendanceRisk = mlBased.attendance * 0.6 + ruleBased.attendance * 0.4;
+      const engagementRisk = mlBased.engagement * 0.6 + ruleBased.engagement * 0.4;
+      const financialRisk = mlBased.financial * 0.6 + ruleBased.financial * 0.4;
+      const socialRisk = mlBased.social * 0.6 + ruleBased.social * 0.4;
       
       const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
       const weights = {
@@ -422,7 +451,7 @@ export const calculateAllAlgorithms = mutation({
       else if (riskScore < 65) riskLevel = "moderate";
       else riskLevel = "high";
       
-      return { riskScore, riskLevel, algorithm: "ML-Inspired" };
+      return { riskScore, riskLevel, algorithm: "Hybrid (ML + Rule-Based)" };
     };
     
     const calculateHolistic = () => {
