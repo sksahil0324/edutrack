@@ -13,8 +13,9 @@ interface AlgorithmResult {
 
 interface ComparisonData {
   ruleBased: AlgorithmResult;
-  mlHolistic: AlgorithmResult;
+  mlBased: AlgorithmResult;
   holistic: AlgorithmResult;
+  mlHolistic: AlgorithmResult;
   comparison: {
     averageScore: number;
     variance: number;
@@ -60,16 +61,22 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
       highlighted: false,
     },
     {
-      data: data.mlHolistic,
-      description: "Combines ML-Based early detection with Holistic compound risk analysis for maximum accuracy",
-      features: ["Early Intervention Focus", "Compound Risk Detection", "Most Accurate"],
-      highlighted: true,
+      data: data.mlBased,
+      description: "Non-linear scoring with exponential penalties for early detection",
+      features: ["Early Detection", "Non-linear Scoring", "Exponential Penalties"],
+      highlighted: false,
     },
     {
       data: data.holistic,
       description: "Equal weighting with compound risk detection and interaction effects",
       features: ["Comprehensive View", "Interaction Effects", "Multi-factor Analysis"],
       highlighted: false,
+    },
+    {
+      data: data.mlHolistic,
+      description: "Combines ML-Based early detection with Holistic compound risk analysis for maximum accuracy",
+      features: ["Early Intervention Focus", "Compound Risk Detection", "Most Accurate"],
+      highlighted: true,
     },
   ];
 

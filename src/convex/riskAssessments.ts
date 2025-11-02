@@ -529,21 +529,106 @@ export const calculateAllAlgorithms = mutation({
     const mlBased = calculateMLBased();
     const holistic = calculateHolistic();
     
+    // ALGORITHM 4: ML + Holistic Combined (Most Accurate)
+    const calculateMLHolisticCombined = () => {
+      // ML-BASED COMPONENT: Non-linear with exponential penalties
+      const cgpaScore = student.currentCGPA / 10.0;
+      const mlAcademic = cgpaScore < 0.5 
+        ? 90 + (0.5 - cgpaScore) * 20
+        : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
+      
+      const mlAttendance = student.attendanceRate < 75 
+        ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
+        : 100 - student.attendanceRate;
+      
+      const mlEngagement = 100 - (
+        Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+        student.classParticipationScore * 0.4 + 
+        Math.sqrt(student.challengeCompletionRate) * 3
+      );
+      
+      // HOLISTIC COMPONENT: Equal weighting with compound effects
+      const holisticAcademic = 100 - (
+        (student.currentCGPA / 10.0) * 33.33 + 
+        student.assignmentCompletionRate * 0.33 + 
+        student.testScoreAverage * 0.33
+      );
+      
+      const holisticAttendance = 100 - (
+        student.attendanceRate * 0.7 + 
+        (100 - student.totalAbsences * 2) * 0.2 + 
+        (100 - student.tardinessCount * 5) * 0.1
+      );
+      
+      const holisticEngagement = 100 - (
+        (student.loginFrequency / 7) * 25 + 
+        student.classParticipationScore * 0.5 + 
+        student.challengeCompletionRate * 0.25
+      );
+      
+      // Compound multiplier for interaction effects
+      const compoundMultiplier = 1 + (
+        (holisticAcademic > 60 && holisticAttendance > 60 ? 0.15 : 0) +
+        (holisticAcademic > 60 && holisticEngagement > 60 ? 0.15 : 0) +
+        (holisticAttendance > 60 && holisticEngagement > 60 ? 0.10 : 0) +
+        (student.feePaymentStatus !== "current" && holisticAcademic > 50 ? 0.10 : 0)
+      );
+      
+      // COMBINED: 55% ML-Based (early detection) + 45% Holistic (compound effects)
+      const academicRisk = mlAcademic * 0.55 + holisticAcademic * 0.45;
+      const attendanceRisk = mlAttendance * 0.55 + holisticAttendance * 0.45;
+      const engagementRisk = mlEngagement * 0.55 + holisticEngagement * 0.45;
+      const financialRisk = student.feePaymentStatus === "overdue" ? 85 : 
+                           student.feePaymentStatus === "delayed" ? 55 : 15;
+      const socialRisk = student.classParticipationScore < 50 
+        ? 100 - student.classParticipationScore + 10
+        : 100 - student.classParticipationScore;
+      
+      const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
+      const weights = {
+        academic: maxRisk === academicRisk ? 0.40 : 0.30,
+        attendance: maxRisk === attendanceRisk ? 0.35 : 0.25,
+        engagement: maxRisk === engagementRisk ? 0.25 : 0.20,
+        financial: 0.10,
+        social: 0.10,
+      };
+      
+      const baseRiskScore = (
+        academicRisk * weights.academic +
+        attendanceRisk * weights.attendance +
+        engagementRisk * weights.engagement +
+        financialRisk * weights.financial +
+        socialRisk * weights.social
+      );
+      
+      const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
+      
+      let riskLevel: "low" | "moderate" | "high";
+      if (riskScore < 35) riskLevel = "low";
+      else if (riskScore < 65) riskLevel = "moderate";
+      else riskLevel = "high";
+      
+      return { riskScore, riskLevel, algorithm: "ML + Holistic", compoundMultiplier };
+    };
+    
+    const mlHolisticCombined = calculateMLHolisticCombined();
+    
     // Calculate average and consensus
-    const avgScore = (ruleBased.riskScore + mlBased.riskScore + holistic.riskScore) / 3;
-    const scores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore];
-    const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 3;
+    const avgScore = (ruleBased.riskScore + mlBased.riskScore + holistic.riskScore + mlHolisticCombined.riskScore) / 4;
+    const scores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore, mlHolisticCombined.riskScore];
+    const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 4;
     const agreement = variance < 100 ? "high" : variance < 400 ? "moderate" : "low";
     
     return {
       ruleBased,
-      mlHolistic: calculateMLBased(),
+      mlBased,
       holistic,
+      mlHolistic: mlHolisticCombined,
       comparison: {
         averageScore: avgScore,
         variance,
         agreement,
-        recommendation: calculateMLBased().riskScore > 60 ? "ML + Holistic flags urgent intervention needed" :
+        recommendation: mlHolisticCombined.riskScore > 60 ? "ML + Holistic Combined flags urgent intervention needed" :
                        holistic.riskScore > 60 ? "Holistic indicates multiple risk factors" :
                        "All algorithms indicate manageable risk"
       }
