@@ -1,4 +1,65 @@
-## Overview
+# EduTrack AI – Intelligent Educational Performance Tracking System
+
+## 📋 Project Overview
+
+**EduTrack AI** is an advanced AI-powered web application designed to revolutionize how educational institutions track, analyze, and predict student academic performance. The system leverages machine learning algorithms, real-time data analytics, and gamification mechanics to identify at-risk students early and enable timely interventions.
+
+### Core Mission
+To provide educators with actionable, data-driven insights into student performance while maintaining student engagement through intelligent gamification and personalized recommendations.
+
+---
+
+## 🎯 Problem Statement
+
+Educational institutions face critical challenges in student performance tracking:
+
+- **Manual & Inconsistent Tracking**: Traditional methods rely on spreadsheets and manual data entry, leading to delays and errors
+- **Late Risk Detection**: At-risk students are often identified too late for effective intervention
+- **Lack of Predictive Analytics**: No proactive systems to forecast dropout risks
+- **Limited Personalization**: Generic support strategies that don't address individual student needs
+- **Poor Engagement**: Students lack motivation and real-time feedback on their progress
+- **Resource Inefficiency**: Support services cannot prioritize interventions effectively
+
+**EduTrack AI solves these problems** by automating performance analysis, predicting risks with 87% accuracy, and providing personalized intervention recommendations.
+
+---
+
+## 🚀 Key Features
+
+### 1. **Multi-Algorithm Risk Assessment**
+- **ML-Inspired Algorithm**: Non-linear scoring with dynamic weights and exponential penalties (Primary)
+- **Rule-Based Algorithm**: Traditional weighted approach for baseline comparison
+- **Holistic Balanced Algorithm**: Equal weighting with compound risk detection
+- **Algorithm Comparison**: View all three algorithms side-by-side with consensus recommendations
+
+### 2. **Real-Time Performance Tracking**
+- Continuous monitoring of academic metrics (CGPA, test scores, assignments)
+- Attendance and engagement tracking
+- Financial status monitoring
+- Automatic risk score recalculation when metrics change
+
+### 3. **Gamification System**
+- **XP & Levels**: Students earn experience points for completing challenges
+- **Badges & Achievements**: Unlock badges for milestones and accomplishments
+- **Streaks**: Track consecutive days of engagement
+- **Leaderboards**: Friendly competition to boost engagement
+
+### 4. **Intervention Management**
+- Teachers can create and track interventions for at-risk students
+- Monitor intervention effectiveness
+- Generate recommendations based on risk assessment
+- Track success rates and outcomes
+
+### 5. **Role-Based Dashboards**
+- **Student Dashboard**: View personal performance, risk assessment, active challenges, and gamification progress
+- **Teacher Dashboard**: Monitor all students, edit metrics, view algorithm comparisons, manage interventions
+- **Admin Dashboard**: User management, system configuration, data oversight
+
+---
+
+## 🏗️ System Architecture
+
+### Technology Stack
 
 This project uses the following tech stack:
 - Vite
