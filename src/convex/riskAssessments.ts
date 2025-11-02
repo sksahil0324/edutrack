@@ -724,3 +724,149 @@ export const getHighRiskStudents = query({
       .collect();
   },
 });
+
+// Recalculate risk for all students
+export const recalculateAllRisks = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const students = await ctx.db.query("students").collect();
+    let calculatedCount = 0;
+    
+    for (const student of students) {
+      try {
+        // Get previous assessment
+        const previous = await ctx.db
+          .query("riskAssessments")
+          .withIndex("by_student", (q) => q.eq("studentId", student._id))
+          .order("desc")
+          .first();
+        
+        // ML-BASED COMPONENT
+        const cgpaScore = student.currentCGPA / 10.0;
+        const mlAcademic = cgpaScore < 0.5 
+          ? 90 + (0.5 - cgpaScore) * 20
+          : 100 - (cgpaScore * 60 + student.assignmentCompletionRate * 0.2 + student.testScoreAverage * 0.2);
+        
+        const mlAttendance = student.attendanceRate < 75 
+          ? 100 - student.attendanceRate + (75 - student.attendanceRate) * 0.5
+          : 100 - student.attendanceRate;
+        
+        const mlEngagement = 100 - (
+          Math.pow(student.loginFrequency / 7, 0.8) * 30 + 
+          student.classParticipationScore * 0.4 + 
+          Math.sqrt(student.challengeCompletionRate) * 3
+        );
+        
+        // HOLISTIC COMPONENT
+        const holisticAcademic = 100 - (
+          (student.currentCGPA / 10.0) * 33.33 + 
+          student.assignmentCompletionRate * 0.33 + 
+          student.testScoreAverage * 0.33
+        );
+        
+        const holisticAttendance = 100 - (
+          student.attendanceRate * 0.7 + 
+          (100 - student.totalAbsences * 2) * 0.2 + 
+          (100 - student.tardinessCount * 5) * 0.1
+        );
+        
+        const holisticEngagement = 100 - (
+          (student.loginFrequency / 7) * 25 + 
+          student.classParticipationScore * 0.5 + 
+          student.challengeCompletionRate * 0.25
+        );
+        
+        const holisticFinancial = student.feePaymentStatus === "overdue" ? 75 : 
+                                 student.feePaymentStatus === "delayed" ? 45 : 
+                                 student.hasScholarship ? 10 : 20;
+        
+        const holisticSocial = 100 - (
+          student.classParticipationScore * 0.6 + 
+          (student.currentStreak / student.longestStreak || 0) * 40
+        );
+        
+        // Compound multiplier
+        const compoundMultiplier = 1 + (
+          (holisticAcademic > 60 && holisticAttendance > 60 ? 0.15 : 0) +
+          (holisticAcademic > 60 && holisticEngagement > 60 ? 0.15 : 0) +
+          (holisticAttendance > 60 && holisticEngagement > 60 ? 0.10 : 0) +
+          (holisticFinancial > 60 && holisticAcademic > 50 ? 0.10 : 0)
+        );
+        
+        // COMBINED: 60% ML + 40% Holistic
+        const mlFinancial = student.feePaymentStatus === "overdue" ? 85 : 
+                           student.feePaymentStatus === "delayed" ? 55 : 15;
+        const mlSocial = student.classParticipationScore < 50 
+          ? 100 - student.classParticipationScore + 10
+          : 100 - student.classParticipationScore;
+        
+        const academicRisk = mlAcademic * 0.60 + holisticAcademic * 0.40;
+        const attendanceRisk = mlAttendance * 0.60 + holisticAttendance * 0.40;
+        const engagementRisk = mlEngagement * 0.60 + holisticEngagement * 0.40;
+        const financialRisk = mlFinancial * 0.60 + holisticFinancial * 0.40;
+        const socialRisk = mlSocial * 0.60 + holisticSocial * 0.40;
+        
+        const maxRisk = Math.max(academicRisk, attendanceRisk, engagementRisk);
+        const weights = {
+          academic: maxRisk === academicRisk ? 0.40 : 0.30,
+          attendance: maxRisk === attendanceRisk ? 0.35 : 0.25,
+          engagement: maxRisk === engagementRisk ? 0.25 : 0.20,
+          financial: 0.10,
+          social: 0.10,
+        };
+        
+        const baseRiskScore = (
+          academicRisk * weights.academic +
+          attendanceRisk * weights.attendance +
+          engagementRisk * weights.engagement +
+          financialRisk * weights.financial +
+          socialRisk * weights.social
+        );
+        
+        const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
+        
+        let riskLevel: "low" | "moderate" | "high";
+        if (riskScore < 35) riskLevel = "low";
+        else if (riskScore < 65) riskLevel = "moderate";
+        else riskLevel = "high";
+        
+        const recommendations: string[] = [];
+        if (compoundMultiplier > 1.2) recommendations.push("Multiple risk factors detected - comprehensive intervention needed");
+        if (academicRisk > 60) recommendations.push("Urgent: Intensive academic support required");
+        if (academicRisk > 45 && academicRisk <= 60) recommendations.push("Schedule regular tutoring sessions");
+        if (attendanceRisk > 50) recommendations.push("Critical: Address chronic absenteeism immediately");
+        if (engagementRisk > 55) recommendations.push("Implement personalized engagement strategies");
+        if (financialRisk > 50) recommendations.push("Priority: Connect with financial aid office");
+        if (socialRisk > 65) recommendations.push("Refer to counseling for social integration support");
+        if (riskScore > 70) recommendations.push("Assign dedicated counselor for holistic support");
+        
+        let trendDirection = "stable";
+        if (previous) {
+          if (riskScore < previous.riskScore - 7) trendDirection = "improving";
+          else if (riskScore > previous.riskScore + 7) trendDirection = "declining";
+        }
+        
+        await ctx.db.insert("riskAssessments", {
+          studentId: student._id,
+          riskLevel,
+          riskScore,
+          academicRisk,
+          attendanceRisk,
+          engagementRisk,
+          financialRisk,
+          socialRisk,
+          recommendations,
+          predictedDropoutProbability: riskScore,
+          trendDirection,
+          previousScore: previous?.riskScore,
+        });
+        
+        calculatedCount++;
+      } catch (error) {
+        console.error(`Error calculating risk for student ${student._id}:`, error);
+      }
+    }
+    
+    return { calculatedCount, message: `Recalculated risk for ${calculatedCount} students using ML + Holistic Combined algorithm` };
+  },
+});
