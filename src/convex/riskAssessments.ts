@@ -50,6 +50,22 @@ export const create = mutation({
   },
 });
 
+// Clear all risk assessments for fresh recalculation
+export const clearAllRiskAssessments = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const assessments = await ctx.db.query("riskAssessments").collect();
+    let deletedCount = 0;
+    
+    for (const assessment of assessments) {
+      await ctx.db.delete(assessment._id);
+      deletedCount++;
+    }
+    
+    return { deletedCount, message: `Cleared ${deletedCount} old risk assessments` };
+  },
+});
+
 // Calculate risk assessment - Uses ML + Holistic Combined algorithm as primary (most accurate)
 export const calculateRisk = mutation({
   args: { studentId: v.id("students") },
