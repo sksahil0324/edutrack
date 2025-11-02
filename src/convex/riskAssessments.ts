@@ -537,13 +537,13 @@ export const calculateAllAlgorithms = mutation({
     
     return {
       ruleBased,
-      mlHolistic: mlBased,
+      mlHolistic: calculateMLBased(),
       holistic,
       comparison: {
         averageScore: avgScore,
         variance,
         agreement,
-        recommendation: mlBased.riskScore > 60 ? "ML + Holistic flags urgent intervention needed" :
+        recommendation: calculateMLBased().riskScore > 60 ? "ML + Holistic flags urgent intervention needed" :
                        holistic.riskScore > 60 ? "Holistic indicates multiple risk factors" :
                        "All algorithms indicate manageable risk"
       }
