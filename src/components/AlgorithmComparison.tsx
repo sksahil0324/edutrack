@@ -114,7 +114,7 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                   </div>
 
                   {algo.highlighted && (
-                    <div className="text-xs border border-primary text-primary inline-block px-1.5 py-0.5 rounded">
+                    <div className="text-xs border border-primary text-primary inline-block px-1.5 py-0.5 rounded mt-2">
                       Recommended
                     </div>
                   )}
