@@ -332,7 +332,7 @@ export default function TeacherDashboard() {
           setAlgorithmComparison(null);
         }
       }}>
-        <DialogContent className="max-w-7xl w-[95vw] max-h-[95vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] w-screen max-h-[95vh] overflow-y-auto">
           {selectedStudent && (
             <>
               <DialogHeader>
