@@ -114,9 +114,9 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                   </div>
 
                   {algo.highlighted && (
-                    <Badge variant="outline" className="text-xs border-primary text-primary inline-block px-1.5 py-0.5">
+                    <div className="text-xs border border-primary text-primary inline-block px-1.5 py-0.5 rounded">
                       Recommended
-                    </Badge>
+                    </div>
                   )}
                 </div>
 
