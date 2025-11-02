@@ -111,9 +111,6 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
                       </h4>
                       {algo.highlighted && <TrendingUp className="w-3 h-3 text-primary flex-shrink-0" />}
                     </div>
-                    <Badge className={`${getRiskColor(algo.data.riskLevel)} text-xs px-1.5 py-0.5 flex-shrink-0 whitespace-nowrap`}>
-                      {algo.data.riskLevel.toUpperCase()}
-                    </Badge>
                   </div>
 
                   {algo.highlighted && (
