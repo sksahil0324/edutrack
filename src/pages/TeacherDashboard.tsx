@@ -85,6 +85,15 @@ export default function TeacherDashboard() {
     }
   }, [selectedStudent, isEditMode]);
 
+  // Auto-calculate risk assessment if not present
+  useEffect(() => {
+    if (selectedStudentId && !selectedStudentRisk) {
+      calculateRisk({ studentId: selectedStudentId }).catch(err => {
+        console.error("Error calculating risk:", err);
+      });
+    }
+  }, [selectedStudentId, selectedStudentRisk, calculateRisk]);
+
   // Filter students based on search query
   const filteredStudents = students?.filter((student) => {
     if (!searchQuery.trim()) return true;
