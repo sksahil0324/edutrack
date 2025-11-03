@@ -716,7 +716,9 @@ export const calculateAllAlgorithms = mutation({
       return { riskScore, riskLevel, algorithm: "ML + Holistic Combined", compoundMultiplier };
     };
     
-    // ALGORITHM 4: Enhanced (Temporal + Weighted Ensemble)
+    const mlHolisticCombined = calculateMLHolisticCombined();
+    
+    // ALGORITHM 5: Enhanced (Temporal + Weighted Ensemble)
     const calculateEnhanced = () => {
       // Calculate temporal trend
       let temporalAdjustment = 1;
@@ -730,11 +732,12 @@ export const calculateAllAlgorithms = mutation({
         }
       }
       
-      // Weighted ensemble of 3 algorithms (Rule-Based, ML-Based, Holistic)
+      // Weighted ensemble of all 4 algorithms
       const ensembleScore = (
-        ruleBased.riskScore * 0.20 +
-        mlBased.riskScore * 0.35 +
-        holistic.riskScore * 0.45
+        ruleBased.riskScore * 0.15 +
+        mlBased.riskScore * 0.25 +
+        holistic.riskScore * 0.20 +
+        mlHolisticCombined.riskScore * 0.40
       );
       
       const riskScore = Math.min(100, ensembleScore * temporalAdjustment);
@@ -749,22 +752,24 @@ export const calculateAllAlgorithms = mutation({
     
     const enhanced = calculateEnhanced();
     
-    // Calculate average and consensus with 4 algorithms (excluding ML + Holistic)
-    const allScores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore, enhanced.riskScore];
-    const avgScore = allScores.reduce((a, b) => a + b, 0) / 4;
-    const variance = allScores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 4;
+    // Calculate average and consensus with all 5 algorithms
+    const allScores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore, mlHolisticCombined.riskScore, enhanced.riskScore];
+    const avgScore = allScores.reduce((a, b) => a + b, 0) / 5;
+    const variance = allScores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 5;
     const agreement = variance < 100 ? "high" : variance < 400 ? "moderate" : "low";
     
     return {
       ruleBased,
       mlBased,
       holistic,
+      mlHolistic: mlHolisticCombined,
       enhanced,
       comparison: {
         averageScore: avgScore,
         variance,
         agreement,
         recommendation: enhanced.riskScore > 60 ? "Enhanced algorithm flags urgent intervention needed - temporal trends confirm escalating risk" :
+                       mlHolisticCombined.riskScore > 60 ? "ML + Holistic Combined indicates high risk" :
                        "Algorithms indicate manageable risk with stable trends"
       }
     };
