@@ -469,19 +469,21 @@ export const calculateRiskHolistic = mutation({
   },
 });
 
-// Run all four algorithms and return comparison
+// Run all five algorithms and return comparison
 export const calculateAllAlgorithms = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
     const student = await ctx.db.get(args.studentId);
     if (!student) throw new Error("Student not found");
     
-    // Get previous assessment for trend calculation
-    const previous = await ctx.db
+    // Get previous assessments for trend calculation
+    const assessments = await ctx.db
       .query("riskAssessments")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
       .order("desc")
-      .first();
+      .take(5);
+    
+    const previous = assessments[0] || null;
     
     // ALGORITHM 1: Rule-Based (Original)
     const calculateRuleBased = () => {
@@ -716,10 +718,44 @@ export const calculateAllAlgorithms = mutation({
     
     const mlHolisticCombined = calculateMLHolisticCombined();
     
-    // Calculate average and consensus
-    const avgScore = (ruleBased.riskScore + mlBased.riskScore + holistic.riskScore + mlHolisticCombined.riskScore) / 4;
-    const scores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore, mlHolisticCombined.riskScore];
-    const variance = scores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 4;
+    // ALGORITHM 5: Enhanced (Temporal + Weighted Ensemble)
+    const calculateEnhanced = () => {
+      // Calculate temporal trend
+      let temporalAdjustment = 1;
+      let trendVelocity = 0;
+      if (assessments.length >= 2) {
+        trendVelocity = assessments[0].riskScore - assessments[1].riskScore;
+        if (trendVelocity > 5) {
+          temporalAdjustment = 1 + (Math.abs(trendVelocity) / 100) * 0.15;
+        } else if (trendVelocity < -5) {
+          temporalAdjustment = Math.max(0.85, 1 - (Math.abs(trendVelocity) / 100) * 0.15);
+        }
+      }
+      
+      // Weighted ensemble of all 4 algorithms
+      const ensembleScore = (
+        ruleBased.riskScore * 0.15 +
+        mlBased.riskScore * 0.25 +
+        holistic.riskScore * 0.20 +
+        mlHolisticCombined.riskScore * 0.40
+      );
+      
+      const riskScore = Math.min(100, ensembleScore * temporalAdjustment);
+      
+      let riskLevel: "low" | "moderate" | "high";
+      if (riskScore < 35) riskLevel = "low";
+      else if (riskScore < 65) riskLevel = "moderate";
+      else riskLevel = "high";
+      
+      return { riskScore, riskLevel, algorithm: "Enhanced (Temporal + Ensemble)", temporalAdjustment, trendVelocity };
+    };
+    
+    const enhanced = calculateEnhanced();
+    
+    // Calculate average and consensus with all 5 algorithms
+    const allScores = [ruleBased.riskScore, mlBased.riskScore, holistic.riskScore, mlHolisticCombined.riskScore, enhanced.riskScore];
+    const avgScore = allScores.reduce((a, b) => a + b, 0) / 5;
+    const variance = allScores.reduce((sum, score) => sum + Math.pow(score - avgScore, 2), 0) / 5;
     const agreement = variance < 100 ? "high" : variance < 400 ? "moderate" : "low";
     
     return {
@@ -727,13 +763,14 @@ export const calculateAllAlgorithms = mutation({
       mlBased,
       holistic,
       mlHolistic: mlHolisticCombined,
+      enhanced,
       comparison: {
         averageScore: avgScore,
         variance,
         agreement,
-        recommendation: mlHolisticCombined.riskScore > 60 ? "ML + Holistic Combined flags urgent intervention needed" :
-                       holistic.riskScore > 60 ? "Holistic indicates multiple risk factors" :
-                       "All algorithms indicate manageable risk"
+        recommendation: enhanced.riskScore > 60 ? "Enhanced algorithm flags urgent intervention needed - temporal trends confirm escalating risk" :
+                       mlHolisticCombined.riskScore > 60 ? "ML + Holistic Combined indicates high risk" :
+                       "Algorithms indicate manageable risk with stable trends"
       }
     };
   },

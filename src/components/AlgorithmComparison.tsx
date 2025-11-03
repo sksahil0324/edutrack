@@ -16,6 +16,7 @@ interface ComparisonData {
   mlBased: AlgorithmResult;
   holistic: AlgorithmResult;
   mlHolistic: AlgorithmResult;
+  enhanced?: AlgorithmResult & { temporalAdjustment?: number; trendVelocity?: number };
   comparison: {
     averageScore: number;
     variance: number;
