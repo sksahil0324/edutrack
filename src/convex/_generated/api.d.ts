@@ -14,6 +14,7 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as admin from "../admin.js";
+import type * as algorithmEnhancements from "../algorithmEnhancements.js";
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as auth from "../auth.js";
 import type * as challenges from "../challenges.js";
@@ -42,6 +43,7 @@ import type * as users from "../users.js";
  */
 declare const fullApi: ApiFromModules<{
   admin: typeof admin;
+  algorithmEnhancements: typeof algorithmEnhancements;
   "auth/emailOtp": typeof auth_emailOtp;
   auth: typeof auth;
   challenges: typeof challenges;

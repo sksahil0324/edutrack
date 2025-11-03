@@ -66,19 +66,34 @@ export const clearAllRiskAssessments = mutation({
   },
 });
 
-// Calculate risk assessment - Uses ML + Holistic Combined algorithm as primary (most accurate)
+// Calculate risk assessment - Uses Enhanced ML + Holistic Combined algorithm with temporal analysis
 export const calculateRisk = mutation({
   args: { studentId: v.id("students") },
   handler: async (ctx, args) => {
     const student = await ctx.db.get(args.studentId);
     if (!student) throw new Error("Student not found");
     
-    // Get previous assessment
-    const previous = await ctx.db
+    // Get previous assessments for temporal analysis
+    const assessments = await ctx.db
       .query("riskAssessments")
       .withIndex("by_student", (q) => q.eq("studentId", args.studentId))
       .order("desc")
-      .first();
+      .take(5);
+    
+    const previous = assessments[0] || null;
+    
+    // Calculate temporal trend for enhanced accuracy
+    let temporalAdjustment = 1;
+    let trendVelocity = 0;
+    if (assessments.length >= 2) {
+      trendVelocity = assessments[0].riskScore - assessments[1].riskScore;
+      // Boost score if declining (worsening), reduce if improving
+      if (trendVelocity > 5) {
+        temporalAdjustment = 1 + (Math.abs(trendVelocity) / 100) * 0.15; // Up to 15% boost
+      } else if (trendVelocity < -5) {
+        temporalAdjustment = Math.max(0.85, 1 - (Math.abs(trendVelocity) / 100) * 0.15); // Down to 15% reduction
+      }
+    }
     
     // ML-BASED COMPONENT: Non-linear with exponential penalties
     const cgpaScore = student.currentCGPA / 10.0;
@@ -163,7 +178,8 @@ export const calculateRisk = mutation({
       socialRisk * weights.social
     );
     
-    const riskScore = Math.min(100, baseRiskScore * compoundMultiplier);
+    // Apply temporal adjustment for enhanced accuracy
+    const riskScore = Math.min(100, baseRiskScore * compoundMultiplier * temporalAdjustment);
     
     // Determine risk level
     let riskLevel: "low" | "moderate" | "high";
@@ -182,11 +198,18 @@ export const calculateRisk = mutation({
     if (socialRisk > 65) recommendations.push("Refer to counseling for social integration support");
     if (riskScore > 70) recommendations.push("Assign dedicated counselor for holistic support");
     
-    // Trend direction
+    // Trend direction with temporal velocity
     let trendDirection = "stable";
     if (previous) {
       if (riskScore < previous.riskScore - 7) trendDirection = "improving";
       else if (riskScore > previous.riskScore + 7) trendDirection = "declining";
+    }
+    
+    // Add temporal velocity to recommendations
+    if (trendVelocity > 10) {
+      recommendations.unshift("ALERT: Risk score rapidly increasing - escalate intervention");
+    } else if (trendVelocity < -10) {
+      recommendations.unshift("Excellent: Risk score rapidly improving - maintain current strategy");
     }
     
     // Create assessment
