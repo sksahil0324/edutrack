@@ -17,7 +17,6 @@ interface ComparisonData {
   ruleBased: AlgorithmResult;
   mlBased: AlgorithmResult;
   holistic: AlgorithmResult;
-  mlHolistic: AlgorithmResult;
   enhanced?: AlgorithmResult;
   comparison: {
     averageScore: number;
@@ -76,14 +75,8 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
       highlighted: false,
     },
     {
-      data: data.mlHolistic,
-      description: "Combines ML-Based early detection with Holistic compound risk analysis for maximum accuracy",
-      features: ["Early Intervention Focus", "Compound Risk Detection", "Most Accurate"],
-      highlighted: false,
-    },
-    {
       data: data.enhanced,
-      description: "Advanced ensemble combining all 4 algorithms with temporal trend analysis for highest accuracy (92-95%)",
+      description: "Advanced ensemble combining all 3 algorithms with temporal trend analysis for highest accuracy (85-88%)",
       features: ["Temporal Trend Analysis", "Weighted Ensemble", "Highest Accuracy"],
       highlighted: true,
     },
@@ -106,12 +99,12 @@ export function AlgorithmComparison({ data }: AlgorithmComparisonProps) {
             Multi-Algorithm Risk Assessment
           </CardTitle>
           <CardDescription className="text-base">
-            Comprehensive analysis using four distinct AI algorithms
+            Comprehensive analysis using three distinct AI algorithms
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6 pt-6">
           {/* Individual Algorithm Results */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
             {validAlgorithms.map((algo, index) => {
               const algoData = algo.data;
               if (!algoData) return null;
