@@ -1,11 +1,11 @@
-# Install Node.js dependencies
+# Install dependencies
 pnpm install
-
-# Setup Convex
-npx convex dev
 
 # Start development server
 pnpm dev
 
 # Build for production
 pnpm build
+
+# Deploy to Convex
+npx convex deploy
