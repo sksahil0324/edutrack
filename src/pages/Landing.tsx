@@ -43,7 +43,7 @@ export default function Landing() {
             transition={{ delay: 0.3, duration: 0.5 }}
             className="text-5xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
           >
-            AI-Powered Student Success
+            EduTrack AI
           </motion.h1>
 
           <motion.p
