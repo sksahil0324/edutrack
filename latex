@@ -1,1223 +1,277 @@
-\documentclass[12pt,a4paper]{report}
+\documentclass[12pt,a4paper]{article}
 \usepackage[utf-8]{inputenc}
-\usepackage[margin=1in]{geometry}
-\usepackage{graphicx}
 \usepackage{tikz}
-\usepackage{listings}
-\usepackage{xcolor}
-\usepackage{hyperref}
-\usepackage{fancyhdr}
-\usepackage{array}
-\usepackage{booktabs}
-\usepackage{float}
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{longtable}
-\usepackage{multirow}
+\usepackage{geometry}
+\geometry{margin=1in}
 
-\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing,shadows}
+\usetikzlibrary{shapes,arrows,positioning,calc,decorations.pathreplacing}
 
-% Code styling
-\lstset{
-    basicstyle=\ttfamily\small,
-    keywordstyle=\color{blue},
-    commentstyle=\color{gray},
-    stringstyle=\color{red},
-    breaklines=true,
-    showstringspaces=false,
-    tabsize=2,
-    frame=single,
-    backgroundcolor=\color{gray!10},
-    numbers=left,
-    numberstyle=\tiny\color{gray}
-}
-
-\title{\textbf{EduTrack AI}\\\Large Comprehensive Technical Documentation\\\normalsize AI-Powered Student Dropout Prediction System}
+\title{EduTrack AI - System Workflow Diagram}
 \author{Development Team}
 \date{\today}
-
-\pagestyle{fancy}
-\fancyhf{}
-\rhead{EduTrack AI - Technical Documentation}
-\lhead{\thepage}
 
 \begin{document}
 
 \maketitle
-\tableofcontents
-\newpage
 
-\chapter{Executive Summary}
+\section*{Complete System Workflow}
 
-EduTrack AI is a comprehensive web-based educational platform designed to predict student dropout risk using advanced machine learning algorithms combined with temporal analysis. The system achieves 92-95\% accuracy in dropout prediction and provides educators with actionable insights, intervention management tools, and gamification mechanisms to improve student retention and engagement.
-
-\section{Key Features}
-\begin{itemize}
-    \item \textbf{92-95\% Accuracy}: Enhanced temporal + ensemble algorithm
-    \item \textbf{Real-time Risk Assessment}: Dynamic risk scoring with trend analysis
-    \item \textbf{Gamification}: XP, levels, streaks, and badges for student engagement
-    \item \textbf{Teacher Interventions}: Manage and track student support activities
-    \item \textbf{Admin Dashboard}: Comprehensive user and system management
-    \item \textbf{Multi-Algorithm Comparison}: Compare 5 different prediction approaches
-\end{itemize}
-
-\section{Technology Stack}
-\begin{itemize}
-    \item \textbf{Frontend}: React 18+, TypeScript, Tailwind CSS, Framer Motion
-    \item \textbf{Backend}: Convex (serverless database + functions)
-    \item \textbf{Authentication}: ID-based login system
-    \item \textbf{Routing}: React Router
-    \item \textbf{UI Components}: shadcn/ui
-    \item \textbf{Build Tool}: Vite
-\end{itemize}
-
-\chapter{System Architecture}
-
-\section{High-Level Architecture}
-
-\begin{figure}[H]
+\begin{figure}[h]
 \centering
-\begin{tikzpicture}[scale=1, node distance=2cm]
-    % Frontend Layer
-    \node[draw, fill=blue!20, rectangle, minimum width=4cm, minimum height=1cm] (frontend) {Frontend Layer (React + TypeScript)};
+\begin{tikzpicture}[scale=1.2, every node/.style={font=\small}]
+    % Define styles
+    \tikzstyle{process} = [rectangle, draw, fill=blue!20, text width=2cm, text centered, rounded corners]
+    \tikzstyle{decision} = [diamond, draw, fill=yellow!20, text width=1.5cm, text centered, aspect=2]
+    \tikzstyle{data} = [cylinder, draw, fill=red!20, text width=1.5cm, text centered, shape aspect=0.5]
+    \tikzstyle{actor} = [ellipse, draw, fill=green!20, text width=1.5cm, text centered]
+    \tikzstyle{arrow} = [thick, ->, >=stealth]
     
-    % API Layer
-    \node[draw, fill=green!20, rectangle, minimum width=4cm, minimum height=1cm, below=of frontend] (api) {Convex API Layer (Queries, Mutations, Actions)};
+    % Layer 1: User Entry
+    \node[actor] (student) at (0, 10) {Student};
+    \node[actor] (teacher) at (3, 10) {Teacher};
+    \node[actor] (admin) at (6, 10) {Admin};
     
-    % Backend Logic
-    \node[draw, fill=orange!20, rectangle, minimum width=4cm, minimum height=1cm, below=of api] (backend) {Backend Logic (Risk Assessment, Gamification)};
+    % Layer 2: Authentication
+    \node[process] (auth) at (3, 8.5) {Authentication\\System};
+    \draw[arrow] (student) -- (auth);
+    \draw[arrow] (teacher) -- (auth);
+    \draw[arrow] (admin) -- (auth);
     
-    % Database
-    \node[draw, fill=red!20, rectangle, minimum width=4cm, minimum height=1cm, below=of backend] (database) {Convex Database (Tables, Indexes)};
+    % Layer 3: Role-Based Access
+    \node[decision] (rolecheck) at (3, 7) {Role\\Check};
+    \draw[arrow] (auth) -- (rolecheck);
     
-    % Arrows
-    \draw[->, thick] (frontend) -- (api);
-    \draw[->, thick] (api) -- (backend);
-    \draw[->, thick] (backend) -- (database);
+    % Layer 4: Dashboard Routes
+    \node[process] (studentdash) at (0, 5.5) {Student\\Dashboard};
+    \node[process] (teacherdash) at (3, 5.5) {Teacher\\Dashboard};
+    \node[process] (admindash) at (6, 5.5) {Admin\\Dashboard};
+    
+    \draw[arrow] (rolecheck) -| (studentdash);
+    \draw[arrow] (rolecheck) -- (teacherdash);
+    \draw[arrow] (rolecheck) -| (admindash);
+    
+    % Layer 5: Core Processing
+    \node[process] (riskassess) at (0, 3.5) {Risk\\Assessment};
+    \node[process] (intervention) at (3, 3.5) {Intervention\\Management};
+    \node[process] (gamification) at (6, 3.5) {Gamification\\Engine};
+    
+    \draw[arrow] (studentdash) -- (riskassess);
+    \draw[arrow] (teacherdash) -- (intervention);
+    \draw[arrow] (studentdash) -- (gamification);
+    
+    % Layer 6: Data Processing
+    \node[process] (dataproc) at (3, 1.5) {Data Processing\\& Analytics};
+    \draw[arrow] (riskassess) -- (dataproc);
+    \draw[arrow] (intervention) -- (dataproc);
+    \draw[arrow] (gamification) -- (dataproc);
+    
+    % Layer 7: Database
+    \node[data] (database) at (3, 0) {Convex\\Database};
+    \draw[arrow] (dataproc) -- (database);
+    
+    % Feedback loops
+    \draw[arrow, dashed] (database) -| (0.5, 2) -- (riskassess);
+    \draw[arrow, dashed] (database) -- (3, 2) -- (intervention);
+    \draw[arrow, dashed] (database) -| (5.5, 2) -- (gamification);
+    
 \end{tikzpicture}
-\caption{EduTrack AI System Architecture}
+\caption{EduTrack AI - Complete System Workflow}
 \end{figure}
 
-\section{Data Flow Diagram}
+\newpage
 
-\begin{figure}[H]
+\section*{Data Flow Diagram}
+
+\begin{figure}[h]
 \centering
-\begin{tikzpicture}[scale=0.9, node distance=2.5cm]
-    % User Input
-    \node[draw, fill=cyan!30, circle, minimum size=1cm] (user) {User};
+\begin{tikzpicture}[scale=1.1, every node/.style={font=\small}]
+    \tikzstyle{process} = [rectangle, draw, fill=blue!20, text width=2cm, text centered, rounded corners]
+    \tikzstyle{data} = [cylinder, draw, fill=red!20, text width=1.5cm, text centered, shape aspect=0.5]
+    \tikzstyle{arrow} = [thick, ->, >=stealth]
     
-    % Authentication
-    \node[draw, fill=yellow!30, rectangle, right=of user] (auth) {Authentication};
+    % Input
+    \node[process] (input) at (0, 5) {Student\\Metrics Input};
     
-    % Dashboard
-    \node[draw, fill=green!30, rectangle, right=of auth] (dashboard) {Dashboard};
+    % Processing Steps
+    \node[process] (validate) at (2.5, 5) {Validate\\Data};
+    \node[process] (calculate) at (5, 5) {Calculate\\Risk Score};
+    \node[process] (analyze) at (7.5, 5) {Analyze\\Trends};
     
-    % Risk Assessment
-    \node[draw, fill=orange!30, rectangle, below=of dashboard] (risk) {Risk Assessment};
+    % Decision
+    \node[process] (decision) at (5, 3) {Generate\\Recommendations};
+    
+    % Output
+    \node[process] (notify) at (2.5, 1) {Notify\\Stakeholders};
+    \node[process] (update) at (5, 1) {Update\\Dashboard};
+    \node[process] (store) at (7.5, 1) {Store\\Results};
     
     % Database
-    \node[draw, fill=red!30, rectangle, below=of risk] (db) {Database};
+    \node[data] (db) at (5, -1) {Database};
     
-    % Interventions
-    \node[draw, fill=purple!30, rectangle, left=of risk] (intervention) {Interventions};
+    % Connections
+    \draw[arrow] (input) -- (validate);
+    \draw[arrow] (validate) -- (calculate);
+    \draw[arrow] (calculate) -- (analyze);
+    \draw[arrow] (analyze) -- (decision);
+    \draw[arrow] (decision) -- (notify);
+    \draw[arrow] (decision) -- (update);
+    \draw[arrow] (decision) -- (store);
+    \draw[arrow] (store) -- (db);
+    \draw[arrow, dashed] (db) -| (0, 3) -- (input);
     
-    % Gamification
-    \node[draw, fill=pink!30, rectangle, left=of db] (gamification) {Gamification};
-    
-    % Arrows
-    \draw[->, thick] (user) -- (auth);
-    \draw[->, thick] (auth) -- (dashboard);
-    \draw[->, thick] (dashboard) -- (risk);
-    \draw[->, thick] (risk) -- (db);
-    \draw[->, thick] (dashboard) -- (intervention);
-    \draw[->, thick] (intervention) -- (db);
-    \draw[->, thick] (dashboard) -- (gamification);
-    \draw[->, thick] (gamification) -- (db);
 \end{tikzpicture}
 \caption{Data Flow Diagram}
 \end{figure}
 
-\chapter{Database Schema}
+\newpage
 
-\section{Schema Definition}
+\section*{Risk Assessment Workflow}
 
-The database schema is defined in \texttt{src/convex/schema.ts} and includes the following tables:
-
-\subsection{Users Table}
-\begin{lstlisting}[language=TypeScript, caption=Users Table Schema]
-users: defineTable({
-  email: v.string(),
-  role: v.union(v.literal("student"), v.literal("teacher"), v.literal("admin")),
-  isVerified: v.boolean(),
-  lastLogin: v.optional(v.number()),
-})
-.index("by_email", ["email"])
-\end{lstlisting}
-
-\subsection{Students Table}
-\begin{lstlisting}[language=TypeScript, caption=Students Table Schema]
-students: defineTable({
-  userId: v.id("users"),
-  studentId: v.string(),
-  fullName: v.string(),
-  email: v.string(),
-  grade: v.number(),
-  section: v.optional(v.string()),
-  currentCGPA: v.number(),
-  attendanceRate: v.number(),
-  testScoreAverage: v.number(),
-  assignmentCompletionRate: v.number(),
-  totalAbsences: v.number(),
-  tardinessCount: v.number(),
-  loginFrequency: v.number(),
-  classParticipationScore: v.number(),
-  feePaymentStatus: v.union(v.literal("current"), v.literal("pending"), v.literal("overdue")),
-  hasScholarship: v.boolean(),
-  xp: v.number(),
-  level: v.number(),
-  currentStreak: v.number(),
-  longestStreak: v.number(),
-  badges: v.array(v.string()),
-})
-.index("by_userId", ["userId"])
-.index("by_studentId", ["studentId"])
-\end{lstlisting}
-
-\subsection{Teachers Table}
-\begin{lstlisting}[language=TypeScript, caption=Teachers Table Schema]
-teachers: defineTable({
-  userId: v.id("users"),
-  teacherId: v.string(),
-  fullName: v.string(),
-  email: v.string(),
-  department: v.string(),
-  subjects: v.array(v.string()),
-  xp: v.number(),
-  level: v.number(),
-  interventionsCompleted: v.number(),
-  successfulInterventions: v.number(),
-})
-.index("by_userId", ["userId"])
-.index("by_teacherId", ["teacherId"])
-\end{lstlisting}
-
-\subsection{Risk Assessments Table}
-\begin{lstlisting}[language=TypeScript, caption=Risk Assessments Table Schema]
-riskAssessments: defineTable({
-  studentId: v.id("students"),
-  riskScore: v.number(),
-  riskLevel: v.union(v.literal("low"), v.literal("moderate"), v.literal("high")),
-  academicRisk: v.number(),
-  attendanceRisk: v.number(),
-  engagementRisk: v.number(),
-  financialRisk: v.number(),
-  socialRisk: v.number(),
-  recommendations: v.array(v.string()),
-  trendDirection: v.optional(v.union(v.literal("improving"), v.literal("declining"), v.literal("stable"))),
-})
-.index("by_studentId", ["studentId"])
-\end{lstlisting}
-
-\subsection{Interventions Table}
-\begin{lstlisting}[language=TypeScript, caption=Interventions Table Schema]
-interventions: defineTable({
-  studentId: v.id("students"),
-  teacherId: v.id("teachers"),
-  title: v.string(),
-  description: v.string(),
-  type: v.string(),
-  status: v.union(v.literal("planned"), v.literal("in-progress"), v.literal("completed")),
-  priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-  initialRiskScore: v.number(),
-  effectiveness: v.optional(v.number()),
-  notes: v.optional(v.string()),
-})
-.index("by_studentId", ["studentId"])
-.index("by_teacherId", ["teacherId"])
-\end{lstlisting}
-
-\subsection{Challenges Table}
-\begin{lstlisting}[language=TypeScript, caption=Challenges Table Schema]
-challenges: defineTable({
-  studentId: v.id("students"),
-  title: v.string(),
-  description: v.string(),
-  xpReward: v.number(),
-  difficulty: v.union(v.literal("easy"), v.literal("medium"), v.literal("hard")),
-  isCompleted: v.boolean(),
-  completedAt: v.optional(v.number()),
-})
-.index("by_studentId", ["studentId"])
-\end{lstlisting}
-
-\subsection{Notifications Table}
-\begin{lstlisting}[language=TypeScript, caption=Notifications Table Schema]
-notifications: defineTable({
-  userId: v.id("users"),
-  title: v.string(),
-  message: v.string(),
-  type: v.string(),
-  isRead: v.boolean(),
-  relatedId: v.optional(v.string()),
-})
-.index("by_userId", ["userId"])
-\end{lstlisting}
-
-\chapter{Backend Modules}
-
-\section{Authentication Module (src/convex/idAuth.ts)}
-
-\subsection{Purpose}
-Handles ID-based authentication for students and teachers.
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Login with ID Function]
-export const loginWithId = mutation({
-  args: {
-    id: v.string(),
-    role: v.union(v.literal("student"), v.literal("teacher")),
-  },
-  handler: async (ctx, args) => {
-    // Query appropriate table based on role
-    if (args.role === "student") {
-      const student = await ctx.db
-        .query("students")
-        .withIndex("by_studentId", (q) => q.eq("studentId", args.id))
-        .unique();
-
-      if (!student) throw new Error("Student not found");
-
-      return {
-        userId: student.userId,
-        profileId: student._id,
-        role: "student",
-        profile: student,
-      };
-    } else {
-      const teacher = await ctx.db
-        .query("teachers")
-        .withIndex("by_teacherId", (q) => q.eq("teacherId", args.id))
-        .unique();
-
-      if (!teacher) throw new Error("Teacher not found");
-
-      return {
-        userId: teacher.userId,
-        profileId: teacher._id,
-        role: "teacher",
-        profile: teacher,
-      };
-    }
-  },
-});
-\end{lstlisting}
-
-\subsection{Inputs/Outputs}
-\begin{itemize}
-    \item \textbf{Input}: ID (string), Role (student | teacher)
-    \item \textbf{Output}: User object with userId, profileId, role, and profile data
-    \item \textbf{Error}: Throws error if user not found
-\end{itemize}
-
-\section{Risk Assessment Module (src/convex/riskAssessments.ts)}
-
-\subsection{Purpose}
-Calculates student dropout risk using multiple algorithms and temporal analysis.
-
-\subsection{Algorithm Overview}
-
-The system implements 5 different algorithms:
-
-\begin{enumerate}
-    \item \textbf{Rule-Based}: Uses predefined rules based on thresholds
-    \item \textbf{ML-Based}: Machine learning approach
-    \item \textbf{Holistic}: Considers all factors equally
-    \item \textbf{ML + Holistic}: Combined approach
-    \item \textbf{Enhanced Temporal + Ensemble}: 92-95\% accuracy (primary)
-\end{enumerate}
-
-\subsection{Risk Calculation Formula}
-
-\begin{equation}
-\text{Risk Score} = \sum_{i=1}^{5} (\text{Risk Component}_i \times \text{Weight}_i)
-\end{equation}
-
-Where:
-\begin{align}
-\text{Academic Risk} &= \frac{(10 - \text{CGPA}) \times 10 + (100 - \text{Test Score}) \times 0.5}{10.5} \\
-\text{Attendance Risk} &= (100 - \text{Attendance Rate}) + (\text{Absences} \times 2) + (\text{Tardiness} \times 1) \\
-\text{Engagement Risk} &= \frac{(100 - \text{Assignment Rate}) + (100 - \text{Participation})}{2} \\
-\text{Financial Risk} &= \begin{cases} 50 & \text{if overdue} \\ 25 & \text{if pending} \\ 0 & \text{if current} \end{cases} \\
-\text{Social Risk} &= (100 - \text{Login Frequency} \times 10) + (5 - \text{Badges}) \times 5
-\end{align}
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Calculate Risk Function]
-export const calculateRisk = mutation({
-  args: { studentId: v.id("students") },
-  handler: async (ctx, args) => {
-    const student = await ctx.db.get(args.studentId);
-    if (!student) throw new Error("Student not found");
-
-    // Calculate individual risk components
-    const academicRisk = calculateAcademicRisk(student);
-    const attendanceRisk = calculateAttendanceRisk(student);
-    const engagementRisk = calculateEngagementRisk(student);
-    const financialRisk = calculateFinancialRisk(student);
-    const socialRisk = calculateSocialRisk(student);
-
-    // Dynamic weighting based on temporal analysis
-    const weights = calculateDynamicWeights(student);
-    
-    // Ensemble calculation
-    const riskScore = 
-      academicRisk * weights.academic +
-      attendanceRisk * weights.attendance +
-      engagementRisk * weights.engagement +
-      financialRisk * weights.financial +
-      socialRisk * weights.social;
-
-    // Determine risk level
-    const riskLevel = riskScore < 30 ? "low" : 
-                      riskScore < 70 ? "moderate" : "high";
-
-    // Generate recommendations
-    const recommendations = generateRecommendations(
-      student, 
-      { academicRisk, attendanceRisk, engagementRisk, financialRisk, socialRisk }
-    );
-
-    // Store assessment
-    return await ctx.db.insert("riskAssessments", {
-      studentId: args.studentId,
-      riskScore,
-      riskLevel,
-      academicRisk,
-      attendanceRisk,
-      engagementRisk,
-      financialRisk,
-      socialRisk,
-      recommendations,
-      trendDirection: calculateTrend(student),
-    });
-  },
-});
-\end{lstlisting}
-
-\subsection{Inputs/Outputs}
-\begin{itemize}
-    \item \textbf{Input}: Student ID
-    \item \textbf{Output}: Risk assessment document with score, level, component scores, and recommendations
-    \item \textbf{Requirements}: Student must exist in database
-\end{itemize}
-
-\section{Students Module (src/convex/students.ts)}
-
-\subsection{Purpose}
-Manages student data, metrics, and gamification progress.
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Get All Students]
-export const getAll = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db.query("students").collect();
-  },
-});
-\end{lstlisting}
-
-\begin{lstlisting}[language=TypeScript, caption=Update Student Metrics]
-export const updateMetrics = mutation({
-  args: {
-    studentId: v.id("students"),
-    currentCGPA: v.number(),
-    assignmentCompletionRate: v.number(),
-    testScoreAverage: v.number(),
-    attendanceRate: v.number(),
-    totalAbsences: v.number(),
-    tardinessCount: v.number(),
-    loginFrequency: v.number(),
-    classParticipationScore: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const { studentId, ...metrics } = args;
-    return await ctx.db.patch(studentId, metrics);
-  },
-});
-\end{lstlisting}
-
-\begin{lstlisting}[language=TypeScript, caption=Add XP to Student]
-export const addXP = mutation({
-  args: { studentId: v.id("students"), xpAmount: v.number() },
-  handler: async (ctx, args) => {
-    const student = await ctx.db.get(args.studentId);
-    if (!student) throw new Error("Student not found");
-
-    const newXP = student.xp + args.xpAmount;
-    const newLevel = Math.floor(newXP / 1000) + 1;
-
-    return await ctx.db.patch(args.studentId, {
-      xp: newXP,
-      level: newLevel,
-    });
-  },
-});
-\end{lstlisting}
-
-\section{Teachers Module (src/convex/teachers.ts)}
-
-\subsection{Purpose}
-Manages teacher data and intervention tracking.
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Get Current Teacher]
-export const getCurrentTeacher = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return null;
-
-    return await ctx.db
-      .query("teachers")
-      .withIndex("by_userId", (q) => q.eq("userId", identity.subject))
-      .unique();
-  },
-});
-\end{lstlisting}
-
-\begin{lstlisting}[language=TypeScript, caption=Get Teacher by ID]
-export const getById = query({
-  args: { teacherId: v.id("teachers") },
-  handler: async (ctx, args) => {
-    const teacher = await ctx.db.get(args.teacherId);
-    if (!teacher) return null;
-
-    const interventions = await ctx.db
-      .query("interventions")
-      .withIndex("by_teacherId", (q) => q.eq("teacherId", args.teacherId))
-      .collect();
-
-    return { ...teacher, interventions };
-  },
-});
-\end{lstlisting}
-
-\section{Interventions Module (src/convex/interventions.ts)}
-
-\subsection{Purpose}
-Manages student interventions created and tracked by teachers.
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Create Intervention]
-export const createIntervention = mutation({
-  args: {
-    studentId: v.id("students"),
-    teacherId: v.id("teachers"),
-    title: v.string(),
-    description: v.string(),
-    type: v.string(),
-    priority: v.union(v.literal("low"), v.literal("medium"), v.literal("high")),
-  },
-  handler: async (ctx, args) => {
-    const student = await ctx.db.get(args.studentId);
-    const riskAssessment = await ctx.db
-      .query("riskAssessments")
-      .withIndex("by_studentId", (q) => q.eq("studentId", args.studentId))
-      .order("desc")
-      .first();
-
-    return await ctx.db.insert("interventions", {
-      ...args,
-      status: "planned",
-      initialRiskScore: riskAssessment?.riskScore || 0,
-    });
-  },
-});
-\end{lstlisting}
-
-\begin{lstlisting}[language=TypeScript, caption=Update Intervention Status]
-export const updateInterventionStatus = mutation({
-  args: {
-    interventionId: v.id("interventions"),
-    status: v.union(v.literal("planned"), v.literal("in-progress"), v.literal("completed")),
-    effectiveness: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.patch(args.interventionId, {
-      status: args.status,
-      effectiveness: args.effectiveness,
-    });
-  },
-});
-\end{lstlisting}
-
-\section{Challenges Module (src/convex/challenges.ts)}
-
-\subsection{Purpose}
-Manages gamification challenges for students.
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Create Challenge]
-export const createChallenge = mutation({
-  args: {
-    studentId: v.id("students"),
-    title: v.string(),
-    description: v.string(),
-    xpReward: v.number(),
-    difficulty: v.union(v.literal("easy"), v.literal("medium"), v.literal("hard")),
-  },
-  handler: async (ctx, args) => {
-    return await ctx.db.insert("challenges", {
-      ...args,
-      isCompleted: false,
-    });
-  },
-});
-\end{lstlisting}
-
-\begin{lstlisting}[language=TypeScript, caption=Complete Challenge]
-export const completeChallenge = mutation({
-  args: {
-    studentId: v.id("students"),
-    challengeId: v.id("challenges"),
-  },
-  handler: async (ctx, args) => {
-    const challenge = await ctx.db.get(args.challengeId);
-    const student = await ctx.db.get(args.studentId);
-
-    if (!challenge || !student) throw new Error("Not found");
-
-    // Award XP
-    const newXP = student.xp + challenge.xpReward;
-    const newLevel = Math.floor(newXP / 1000) + 1;
-
-    // Update streak
-    const newStreak = student.currentStreak + 1;
-
-    // Update student
-    await ctx.db.patch(args.studentId, {
-      xp: newXP,
-      level: newLevel,
-      currentStreak: newStreak,
-      longestStreak: Math.max(newStreak, student.longestStreak),
-    });
-
-    // Mark challenge as completed
-    return await ctx.db.patch(args.challengeId, {
-      isCompleted: true,
-      completedAt: Date.now(),
-    });
-  },
-});
-\end{lstlisting}
-
-\section{Admin Module (src/convex/admin.ts)}
-
-\subsection{Purpose}
-Provides administrative functions for system-wide management.
-
-\subsection{Key Functions}
-
-\begin{lstlisting}[language=TypeScript, caption=Get All Students with Risk]
-export const getAllStudents = query({
-  args: {},
-  handler: async (ctx) => {
-    const students = await ctx.db.query("students").collect();
-    
-    return Promise.all(
-      students.map(async (student) => {
-        const riskAssessment = await ctx.db
-          .query("riskAssessments")
-          .withIndex("by_studentId", (q) => q.eq("studentId", student._id))
-          .order("desc")
-          .first();
-
-        return { ...student, riskAssessment };
-      })
-    );
-  },
-});
-\end{lstlisting}
-
-\begin{lstlisting}[language=TypeScript, caption=Get System Statistics]
-export const getStatistics = query({
-  args: {},
-  handler: async (ctx) => {
-    const students = await ctx.db.query("students").collect();
-    const teachers = await ctx.db.query("teachers").collect();
-    
-    const atRiskStudents = students.filter(s => {
-      // Count students with high/moderate risk
-      return true;
-    }).length;
-
-    return {
-      totalStudents: students.length,
-      totalTeachers: teachers.length,
-      atRiskStudents,
-      activeUsers: students.length + teachers.length,
-    };
-  },
-});
-\end{lstlisting}
-
-\chapter{Frontend Components}
-
-\section{Page Structure}
-
-\begin{figure}[H]
+\begin{figure}[h]
 \centering
-\begin{tikzpicture}[scale=0.85, node distance=2.5cm]
-    \node[draw, fill=blue!20, rectangle] (landing) {Landing Page};
+\begin{tikzpicture}[scale=1.1, every node/.style={font=\small}]
+    \tikzstyle{process} = [rectangle, draw, fill=blue!20, text width=2cm, text centered, rounded corners]
+    \tikzstyle{decision} = [diamond, draw, fill=yellow!20, text width=1.5cm, text centered, aspect=2]
+    \tikzstyle{arrow} = [thick, ->, >=stealth]
     
-    \node[draw, fill=green!20, rectangle, below left=of landing] (signin) {Sign In};
-    \node[draw, fill=green!20, rectangle, below=of landing] (rolesel) {Role Selection};
-    \node[draw, fill=green!20, rectangle, below right=of landing] (adminlogin) {Admin Login};
+    % Start
+    \node[process] (start) at (3, 9) {Fetch Student\\Data};
     
-    \node[draw, fill=yellow!20, rectangle, below left=of rolesel] (studentsetup) {Student Setup};
-    \node[draw, fill=yellow!20, rectangle, below right=of rolesel] (teachersetup) {Teacher Setup};
+    % Risk Components
+    \node[process] (academic) at (0, 7) {Academic\\Risk};
+    \node[process] (attendance) at (2, 7) {Attendance\\Risk};
+    \node[process] (engagement) at (4, 7) {Engagement\\Risk};
+    \node[process] (financial) at (6, 7) {Financial\\Risk};
     
-    \node[draw, fill=orange!20, rectangle, below left=of studentsetup] (studentdash) {Student Dashboard};
-    \node[draw, fill=orange!20, rectangle, below=of studentsetup] (teacherdash) {Teacher Dashboard};
-    \node[draw, fill=orange!20, rectangle, below right=of studentsetup] (admindash) {Admin Dashboard};
+    % Weighting
+    \node[process] (weight) at (3, 5) {Calculate\\Dynamic Weights};
     
-    \draw[->, thick] (landing) -- (signin);
-    \draw[->, thick] (landing) -- (rolesel);
-    \draw[->, thick] (landing) -- (adminlogin);
-    \draw[->, thick] (rolesel) -- (studentsetup);
-    \draw[->, thick] (rolesel) -- (teachersetup);
-    \draw[->, thick] (studentsetup) -- (studentdash);
-    \draw[->, thick] (teachersetup) -- (teacherdash);
-    \draw[->, thick] (adminlogin) -- (admindash);
+    % Ensemble
+    \node[process] (ensemble) at (3, 3) {Ensemble\\Calculation};
+    
+    % Decision
+    \node[decision] (riskdec) at (3, 1) {Risk\\Level?};
+    
+    % Outputs
+    \node[process] (low) at (0, -1) {Low Risk};
+    \node[process] (moderate) at (3, -1) {Moderate\\Risk};
+    \node[process] (high) at (6, -1) {High Risk};
+    
+    % Connections
+    \draw[arrow] (start) -- (academic);
+    \draw[arrow] (start) -- (attendance);
+    \draw[arrow] (start) -- (engagement);
+    \draw[arrow] (start) -- (financial);
+    
+    \draw[arrow] (academic) -- (weight);
+    \draw[arrow] (attendance) -- (weight);
+    \draw[arrow] (engagement) -- (weight);
+    \draw[arrow] (financial) -- (weight);
+    
+    \draw[arrow] (weight) -- (ensemble);
+    \draw[arrow] (ensemble) -- (riskdec);
+    
+    \draw[arrow] (riskdec) -| (low);
+    \draw[arrow] (riskdec) -- (moderate);
+    \draw[arrow] (riskdec) -| (high);
+    
 \end{tikzpicture}
-\caption{Frontend Navigation Flow}
+\caption{Risk Assessment Workflow}
 \end{figure}
 
-\section{Landing Page (src/pages/Landing.tsx)}
+\newpage
 
-\subsection{Purpose}
-Entry point for the application, showcasing features and directing users.
+\section*{Intervention Management Workflow}
 
-\subsection{Key Sections}
-
-\begin{lstlisting}[language=TypeScript, caption=Landing Page Structure]
-export default function Landing() {
-  const { isLoading, isAuthenticated, user } = useAuth();
-  const navigate = useNavigate();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50">
-      {/* Hero Section */}
-      <motion.div className="container mx-auto px-4 py-20">
-        <h1 className="text-5xl md:text-6xl font-bold">EduTrack AI</h1>
-        <p className="text-xl md:text-2xl text-muted-foreground mb-12">
-          Predict dropout risks, motivate students through gamification
-        </p>
-        
-        {isAuthenticated ? (
-          <Button onClick={() => navigate("/role-selection")}>
-            Go to Dashboard
-          </Button>
-        ) : (
-          <Button onClick={() => navigate("/sign-in")}>
-            Sign In
-          </Button>
-        )}
-      </motion.div>
-
-      {/* Features Section */}
-      <motion.div className="container mx-auto px-4 py-20">
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Feature cards */}
-        </div>
-      </motion.div>
-
-      {/* CTA Section */}
-      <motion.div className="container mx-auto px-4 py-20">
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-12">
-          <h2 className="text-4xl font-bold mb-4 text-white">
-            Ready to Transform Education?
-          </h2>
-          <Button onClick={() => navigate("/role-selection")}>
-            Start Free Today
-          </Button>
-        </div>
-      </motion.div>
-
-      {/* Admin Login Footer */}
-      <div className="container mx-auto px-4 py-8 text-center">
-        <Button onClick={() => navigate("/admin-login")}>
-          Admin Login
-        </Button>
-      </div>
-    </div>
-  );
-}
-\end{lstlisting}
-
-\section{Sign In Page (src/pages/SignIn.tsx)}
-
-\subsection{Purpose}
-Handles ID-based authentication for students and teachers.
-
-\subsection{User Flow}
-\begin{enumerate}
-    \item User selects role (Student or Teacher)
-    \item User enters their ID
-    \item System validates ID and logs user in
-    \item User is redirected to dashboard
-\end{enumerate}
-
-\section{Student Dashboard (src/pages/StudentDashboard.tsx)}
-
-\subsection{Purpose}
-Displays student progress, risk assessment, and gamification metrics.
-
-\subsection{Key Components}
-\begin{itemize}
-    \item CGPA display
-    \item Attendance rate
-    \item Risk level indicator
-    \item XP and level progress
-    \item Active challenges
-    \item Badges earned
-\end{itemize}
-
-\section{Teacher Dashboard (src/pages/TeacherDashboard.tsx)}
-
-\subsection{Purpose}
-Enables teachers to monitor students and manage interventions.
-
-\subsection{Key Components}
-\begin{itemize}
-    \item Student list with risk indicators
-    \item Intervention management
-    \item Risk assessment details
-    \item Student performance metrics
-    \item Intervention effectiveness tracking
-\end{itemize}
-
-\section{Admin Dashboard (src/pages/AdminDashboard.tsx)}
-
-\subsection{Purpose}
-Provides system-wide management and analytics.
-
-\subsection{Key Components}
-\begin{itemize}
-    \item Total students and teachers count
-    \item At-risk students count
-    \item System statistics
-    \item User management
-    \item Search and filter functionality
-\end{itemize}
-
-\chapter{Authentication Flow}
-
-\section{ID-Based Authentication Process}
-
-\begin{figure}[H]
+\begin{figure}[h]
 \centering
-\begin{tikzpicture}[scale=0.9, node distance=2cm]
-    \node[draw, fill=blue!20, rectangle] (start) {User Visits App};
-    \node[draw, fill=blue!20, rectangle, below=of start] (landing) {Landing Page};
-    \node[draw, fill=green!20, rectangle, below=of landing] (signin) {Sign In Page};
-    \node[draw, fill=green!20, rectangle, below=of signin] (rolesel) {Select Role};
-    \node[draw, fill=green!20, rectangle, below=of rolesel] (enterid) {Enter ID};
-    \node[draw, fill=yellow!20, rectangle, below=of enterid] (verify) {Verify ID};
-    \node[draw, fill=orange!20, rectangle, below=of verify] (dashboard) {Dashboard};
+\begin{tikzpicture}[scale=1.1, every node/.style={font=\small}]
+    \tikzstyle{process} = [rectangle, draw, fill=blue!20, text width=2cm, text centered, rounded corners]
+    \tikzstyle{decision} = [diamond, draw, fill=yellow!20, text width=1.5cm, text centered, aspect=2]
+    \tikzstyle{arrow} = [thick, ->, >=stealth]
     
-    \draw[->, thick] (start) -- (landing);
-    \draw[->, thick] (landing) -- (signin);
-    \draw[->, thick] (signin) -- (rolesel);
-    \draw[->, thick] (rolesel) -- (enterid);
-    \draw[->, thick] (enterid) -- (verify);
-    \draw[->, thick] (verify) -- (dashboard);
+    % Start
+    \node[process] (identify) at (3, 9) {Identify\\At-Risk Student};
+    
+    % Priority
+    \node[decision] (priority) at (3, 7.5) {Risk\\Level?};
+    
+    % Intervention Types
+    \node[process] (template) at (3, 5.5) {Select\\Intervention\\Template};
+    
+    % Assignment
+    \node[process] (assign) at (3, 4) {Assign to\\Teacher};
+    
+    % Execution
+    \node[process] (execute) at (1, 2) {In-Progress};
+    \node[process] (complete) at (3, 2) {Completed};
+    \node[process] (monitor) at (5, 2) {Monitor\\Progress};
+    
+    % Evaluation
+    \node[process] (evaluate) at (3, 0.5) {Evaluate\\Effectiveness};
+    
+    % Connections
+    \draw[arrow] (identify) -- (priority);
+    \draw[arrow] (priority) -- (template);
+    \draw[arrow] (template) -- (assign);
+    \draw[arrow] (assign) -- (execute);
+    \draw[arrow] (assign) -- (complete);
+    \draw[arrow] (assign) -- (monitor);
+    \draw[arrow] (execute) -- (evaluate);
+    \draw[arrow] (complete) -- (evaluate);
+    \draw[arrow] (monitor) -- (evaluate);
+    
 \end{tikzpicture}
-\caption{Authentication Flow}
+\caption{Intervention Management Workflow}
 \end{figure}
 
-\section{Session Management}
+\newpage
 
-User data is stored in \texttt{sessionStorage} after successful authentication:
+\section*{Gamification Workflow}
 
-\begin{lstlisting}[language=TypeScript, caption=Session Storage Structure]
-{
-  userId: string,
-  profileId: string,
-  role: "student" | "teacher",
-  profile: {
-    // Full user profile object
-  }
-}
-\end{lstlisting}
-
-\chapter{Gamification System}
-
-\section{Gamification Mechanics}
-
-\begin{table}[H]
+\begin{figure}[h]
 \centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Component} & \textbf{Description} & \textbf{Impact} \\
-\hline
-XP (Experience Points) & Earned from challenges and activities & Progression \\
-Levels & Calculated from XP (1000 XP per level) & Status \\
-Streaks & Consecutive days of engagement & Motivation \\
-Badges & Achievements for milestones & Recognition \\
-Challenges & Tasks with XP rewards & Engagement \\
-\hline
-\end{tabular}
-\caption{Gamification Components}
-\end{table}
-
-\section{XP Calculation}
-
-\begin{equation}
-\text{Level} = \lfloor \frac{\text{Total XP}}{1000} \rfloor + 1
-\end{equation}
-
-\section{Streak Calculation}
-
-Streaks are incremented when a student completes challenges on consecutive days. A streak resets if a day is missed.
-
-\chapter{Working Flow}
-
-\section{Complete User Journey}
-
-\subsection{Student Journey}
-
-\begin{enumerate}
-    \item Student visits landing page
-    \item Student clicks "Sign In"
-    \item Student selects "Student" role
-    \item Student enters their student ID
-    \item System validates ID against students table
-    \item System stores session data
-    \item Student is redirected to student dashboard
-    \item Student can view:
-    \begin{itemize}
-        \item Personal metrics (CGPA, attendance, etc.)
-        \item Risk assessment and recommendations
-        \item Active challenges
-        \item XP and level progress
-        \item Badges earned
-    \end{itemize}
-    \item Student completes challenges to earn XP
-    \item System updates student metrics
-    \item Risk assessment is recalculated
-\end{enumerate}
-
-\subsection{Teacher Journey}
-
-\begin{enumerate}
-    \item Teacher visits landing page
-    \item Teacher clicks "Sign In"
-    \item Teacher selects "Teacher" role
-    \item Teacher enters their teacher ID
-    \item System validates ID against teachers table
-    \item System stores session data
-    \item Teacher is redirected to teacher dashboard
-    \item Teacher can view:
-    \begin{itemize}
-        \item List of all students
-        \item Risk indicators for each student
-        \item Detailed risk assessments
-        \item Student performance metrics
-    \end{itemize}
-    \item Teacher creates interventions for at-risk students
-    \item Teacher tracks intervention progress
-    \item Teacher updates intervention status and effectiveness
-    \item System updates teacher XP and intervention count
-\end{enumerate}
-
-\subsection{Admin Journey}
-
-\begin{enumerate}
-    \item Admin visits landing page
-    \item Admin clicks "Admin Login"
-    \item Admin enters credentials (admin123 / 1231)
-    \item System validates credentials
-    \item Admin is redirected to admin dashboard
-    \item Admin can view:
-    \begin{itemize}
-        \item Total students and teachers
-        \item At-risk students count
-        \item System statistics
-    \end{itemize}
-    \item Admin can search and filter users
-    \item Admin can manage user accounts
-\end{enumerate}
-
-\chapter{API Reference}
-
-\section{Query Functions}
-
-Query functions are read-only operations that fetch data from the database.
-
-\subsection{Students Queries}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Function} & \textbf{Args} & \textbf{Returns} \\
-\hline
-getAll & None & Array of all students \\
-getCurrentStudent & None & Current student object \\
-getById & studentId & Student object \\
-\hline
-\end{tabular}
-\caption{Students Query Functions}
-\end{table}
-
-\subsection{Teachers Queries}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Function} & \textbf{Args} & \textbf{Returns} \\
-\hline
-getCurrentTeacher & None & Current teacher object \\
-getById & teacherId & Teacher object with interventions \\
-getAll & None & Array of all teachers \\
-\hline
-\end{tabular}
-\caption{Teachers Query Functions}
-\end{table}
-
-\subsection{Risk Assessment Queries}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Function} & \textbf{Args} & \textbf{Returns} \\
-\hline
-getLatestForStudent & studentId & Latest risk assessment \\
-getAll & None & All risk assessments \\
-\hline
-\end{tabular}
-\caption{Risk Assessment Query Functions}
-\end{table}
-
-\section{Mutation Functions}
-
-Mutation functions modify data in the database.
-
-\subsection{Students Mutations}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Function} & \textbf{Args} & \textbf{Returns} \\
-\hline
-updateMetrics & studentId, metrics & Updated student \\
-addXP & studentId, xpAmount & Updated student \\
-\hline
-\end{tabular}
-\caption{Students Mutation Functions}
-\end{table}
-
-\subsection{Interventions Mutations}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Function} & \textbf{Args} & \textbf{Returns} \\
-\hline
-createIntervention & studentId, teacherId, title, etc. & New intervention \\
-updateStatus & interventionId, status, effectiveness & Updated intervention \\
-\hline
-\end{tabular}
-\caption{Interventions Mutation Functions}
-\end{table}
-
-\chapter{Deployment and Setup}
-
-\section{Prerequisites}
-
-\begin{itemize}
-    \item Node.js 18+
-    \item pnpm or npm
-    \item Convex account
-    \item Git
-\end{itemize}
-
-\section{Installation Steps}
-
-\begin{lstlisting}[language=bash, caption=Installation Commands]
-# Clone repository
-git clone <repository-url>
-cd edutrack-ai
-
-# Install dependencies
-pnpm install
-
-# Setup Convex
-npx convex dev
-
-# Start development server
-pnpm dev
-
-# Build for production
-pnpm build
-
-# Deploy
-npx convex deploy
-\end{lstlisting}
-
-\section{Environment Variables}
-
-\begin{lstlisting}[caption=.env.local Configuration]
-VITE_CONVEX_URL=<your-convex-url>
-CONVEX_DEPLOYMENT=<your-deployment>
-\end{lstlisting}
-
-\chapter{Demo Credentials}
-
-\section{Test Accounts}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|l|l|}
-\hline
-\textbf{Role} & \textbf{ID} & \textbf{Password} \\
-\hline
-Admin & admin123 & 1231 \\
-Student & S001 & (ID-based) \\
-Teacher & T001 & (ID-based) \\
-\hline
-\end{tabular}
-\caption{Demo Credentials}
-\end{table}
-
-\chapter{Performance Metrics}
-
-\section{Algorithm Accuracy}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|c|c|c|}
-\hline
-\textbf{Algorithm} & \textbf{Accuracy} & \textbf{Precision} & \textbf{Recall} \\
-\hline
-Rule-Based & 78\% & 0.75 & 0.82 \\
-ML-Based & 82\% & 0.80 & 0.85 \\
-Holistic & 85\% & 0.83 & 0.87 \\
-ML + Holistic & 89\% & 0.87 & 0.91 \\
-Enhanced (Temporal + Ensemble) & 92-95\% & 0.93 & 0.94 \\
-\hline
-\end{tabular}
-\caption{Algorithm Performance Comparison}
-\end{table}
-
-\chapter{Troubleshooting}
-
-\section{Common Issues}
-
-\subsection{Authentication Fails}
-\begin{itemize}
-    \item Verify student/teacher ID exists in database
-    \item Check sessionStorage for corrupted data
-    \item Clear browser cache and try again
-\end{itemize}
-
-\subsection{Risk Score Not Updating}
-\begin{itemize}
-    \item Ensure student metrics are properly updated
-    \item Check Convex function logs
-    \item Manually trigger recalculation
-\end{itemize}
-
-\subsection{Dashboard Not Loading}
-\begin{itemize}
-    \item Check network connectivity
-    \item Verify Convex deployment is active
-    \item Check browser console for errors
-\end{itemize}
-
-\chapter{Future Enhancements}
-
-\begin{itemize}
-    \item \textbf{Mobile App}: Native iOS/Android applications
-    \item \textbf{Advanced Analytics}: Predictive trend analysis
-    \item \textbf{Integration}: LMS and ERP system integration
-    \item \textbf{AI Chatbot}: Student support chatbot
-    \item \textbf{Email Notifications}: Automated alerts for at-risk students
-    \item \textbf{Parent Portal}: Parent access to student progress
-    \item \textbf{Multi-language Support}: Internationalization
-\end{itemize}
-
-\chapter{Conclusion}
-
-EduTrack AI represents a comprehensive solution for student dropout prediction and intervention management. By combining advanced machine learning algorithms with gamification and teacher tools, the system provides a holistic approach to improving student retention and engagement.
-
-The 92-95\% accuracy of the Enhanced algorithm, combined with real-time risk assessment and actionable recommendations, makes EduTrack AI an invaluable tool for educational institutions seeking to improve student outcomes and retention rates.
-
-\appendix
-
-\chapter{File Structure}
-
-\begin{lstlisting}[caption=Project Directory Structure]
-edutrack-ai/
-├── src/
-│   ├── components/
-│   │   ├── AlgorithmComparison.tsx
-│   │   ├── LogoDropdown.tsx
-│   │   └── ui/
-│   ├── convex/
-│   │   ├── schema.ts
-│   │   ├── auth.ts
-│   │   ├── idAuth.ts
-│   │   ├── students.ts
-│   │   ├── teachers.ts
-│   │   ├── admin.ts
-│   │   ├── riskAssessments.ts
-│   │   ├── interventions.ts
-│   │   ├── challenges.ts
-│   │   ├── notifications.ts
-│   │   └── http.ts
-│   ├── pages/
-│   │   ├── Landing.tsx
-│   │   ├── SignIn.tsx
-│   │   ├── RoleSelection.tsx
-│   │   ├── StudentSetup.tsx
-│   │   ├── StudentDashboard.tsx
-│   │   ├── TeacherSetup.tsx
-│   │   ├── TeacherDashboard.tsx
-│   │   ├── AdminLogin.tsx
-│   │   ├── AdminDashboard.tsx
-│   │   └── NotFound.tsx
-│   ├── hooks/
-│   │   ├── use-auth.ts
-│   │   └── use-mobile.ts
-│   ├── lib/
-│   │   └── utils.ts
-│   ├── main.tsx
-│   └── index.css
-├── public/
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
-\end{lstlisting}
+\begin{tikzpicture}[scale=1.1, every node/.style={font=\small}]
+    \tikzstyle{process} = [rectangle, draw, fill=blue!20, text width=2cm, text centered, rounded corners]
+    \tikzstyle{decision} = [diamond, draw, fill=yellow!20, text width=1.5cm, text centered, aspect=2]
+    \tikzstyle{arrow} = [thick, ->, >=stealth]
+    
+    % Start
+    \node[process] (activity) at (3, 8) {Student\\Activity};
+    
+    % Challenge Check
+    \node[decision] (challenge) at (3, 6.5) {Challenge\\Completed?};
+    
+    % XP Award
+    \node[process] (xp) at (1, 5) {Award XP};
+    \node[process] (streak) at (3, 5) {Update\\Streak};
+    \node[process] (badge) at (5, 5) {Check\\Badges};
+    
+    % Level Check
+    \node[decision] (levelup) at (3, 3.5) {Level\\Up?};
+    
+    % Update
+    \node[process] (update) at (1.5, 2) {Update\\Level};
+    \node[process] (notify) at (4.5, 2) {Notify\\Student};
+    
+    % Store
+    \node[process] (store) at (3, 0.5) {Store\\Progress};
+    
+    % Connections
+    \draw[arrow] (activity) -- (challenge);
+    \draw[arrow] (challenge) -- (xp);
+    \draw[arrow] (challenge) -- (streak);
+    \draw[arrow] (challenge) -- (badge);
+    \draw[arrow] (xp) -- (levelup);
+    \draw[arrow] (streak) -- (levelup);
+    \draw[arrow] (badge) -- (levelup);
+    \draw[arrow] (levelup) -- (update);
+    \draw[arrow] (levelup) -- (notify);
+    \draw[arrow] (update) -- (store);
+    \draw[arrow] (notify) -- (store);
+    
+\end{tikzpicture}
+\caption{Gamification Workflow}
+\end{figure}
 
 \end{document}
